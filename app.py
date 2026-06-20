@@ -1,133 +1,156 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import hmac
-import werkzeug.security
-from datetime import datetime
-
-werkzeug.security.safe_str_cmp = hmac.compare_digest
-from flask_bcrypt import Bcrypt
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super-secret-key-bhishmak'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kanban_pro.db' # 🚀 नया डेटाबेस ताकि नए कॉलम्स बन सकें
+app.config['SECRET_KEY'] = 'bhishmak_ka_secret_123'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trello_board.db' # 🚀 नया डेटाबेस नाम ताकि Render पर एरर न आए
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+
+login_manager = LoginManager()
 login_manager.login_view = 'login'
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    
-    @property
-    def is_active(self): return True
-    @property
-    def is_authenticated(self): return True
-    @property
-    def is_anonymous(self): return False
-    def get_id(self): return str(self.id)
-
-# 🚀 अपडेटेड टास्क मॉडल: जिसमें date और priority भी शामिल है
-class Todo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    status = db.Column(db.String(50), default='Backlog') # Backlog, Todo, In Progress, Done
-    priority = db.Column(db.String(20), default='Medium') # High, Medium, Low
-    due_date = db.Column(db.String(50), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# --- Models ---
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False) 
+    tasks = db.relationship('Task', backref='owner', lazy=True)
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    category = db.Column(db.String(20), default='Personal')
+    priority = db.Column(db.String(20), default='Medium')
+    due_date = db.Column(db.String(50), nullable=True)
+    status = db.Column(db.String(50), default='Backlog') # 🚀 डिफॉल्ट स्टेटस Backlog
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date_created = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
+
+# Render deployment ke liye tables create karna
 with app.app_context():
     db.create_all()
 
-@app.route('/')
+# --- Routes ---
+@app.route("/")
 @login_required
-def index():
-    todos = Todo.query.filter_by(user_id=current_user.id).all()
-    return render_template('index.html', todos=todos)
+def home():
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+    return render_template("index.html", tasks=tasks, user_name=current_user.username)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and bcrypt.check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for('index'))
-        else:
-            flash('Invalid Username or Password', 'danger')
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        
-        user_exists = User.query.filter_by(username=username).first()
-        if user_exists:
-            flash('Username already exists!', 'danger')
-            return redirect(url_for('register'))
-            
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
-    return render_template('register.html')
-
-@app.route('/logout')
+@app.route("/add", methods=["POST"])
 @login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/add', methods=['POST'])
-@login_required
-def add_todo():
-    title = request.form.get('title')
-    priority = request.form.get('priority', 'Medium')
-    due_date = request.form.get('due_date')
+def add_task():
+    name = request.form.get("task_name")
+    category = request.form.get("category")
+    priority = request.form.get("priority", "Medium")
+    due_date = request.form.get("due_date")
     
+    # Date formatting
     if due_date:
-        # तारीख को अच्छे फॉर्मेट (DD-MM-YYYY) में बदलने के लिए
         try:
             date_obj = datetime.strptime(due_date, '%Y-%m-%d')
             due_date = date_obj.strftime('%d %b %Y')
         except:
             pass
 
-    if title:
-        new_todo = Todo(title=title, priority=priority, due_date=due_date, user_id=current_user.id)
-        db.session.add(new_todo)
+    if name:
+        new_task = Task(name=name, user_id=current_user.id, category=category, priority=priority, due_date=due_date)
+        db.session.add(new_task)
         db.session.commit()
-    return redirect(url_for('index'))
+        flash("Task added to Backlog! 🚀", "success")
+    return redirect(url_for('home'))
 
-@app.route('/update/<int:todo_id>/<string:status>')
+@app.route("/edit/<int:tid>", methods=['GET', 'POST'])
 @login_required
-def update_todo(todo_id, status):
-    todo = Todo.query.get_or_404(todo_id)
-    if todo.user_id == current_user.id:
-        todo.status = status
+def edit_task(tid):
+    task = Task.query.get(tid)
+    if not task or task.user_id != current_user.id:
+        flash("Task not found! ⚠️", "danger")
+        return redirect(url_for('home'))
+        
+    if request.method == 'POST':
+        task.name = request.form.get("task_name")
+        task.category = request.form.get("category")
+        task.priority = request.form.get("priority")
+        task.status = request.form.get("status")
+        
+        # Update due date
+        new_date = request.form.get("due_date")
+        if new_date:
+            try:
+                date_obj = datetime.strptime(new_date, '%Y-%m-%d')
+                task.due_date = date_obj.strftime('%d %b %Y')
+            except ValueError:
+                task.due_date = new_date # Keep old format if not picked from calendar
+        else:
+            task.due_date = None
+            
         db.session.commit()
-    return redirect(url_for('index'))
+        flash("Task updated! ✨", "success")
+        return redirect(url_for('home'))
+        
+    return render_template("edit.html", task=task)
 
-@app.route('/delete/<int:todo_id>')
+@app.route("/update/<int:tid>/<string:next_status>")
 @login_required
-def delete_todo(todo_id):
-    todo = Todo.query.get_or_404(todo_id)
-    if todo.user_id == current_user.id:
-        db.session.delete(todo)
+def update_task(tid, next_status):
+    task = Task.query.get(tid)
+    if task and task.user_id == current_user.id:
+        task.status = next_status
         db.session.commit()
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
 
-if __name__ == '__main__':
+@app.route("/delete/<int:tid>")
+@login_required
+def delete_task(tid):
+    task = Task.query.get(tid)
+    if task and task.user_id == current_user.id:
+        db.session.delete(task)
+        db.session.commit()
+        flash("Task removed! 🗑️", "danger")
+    return redirect(url_for('home'))
+
+@app.route("/about")
+def about(): return render_template("about.html")
+
+@app.route("/signup", methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        un, pw = request.form.get('username'), request.form.get('password')
+        if not User.query.filter_by(username=un).first():
+            db.session.add(User(username=un, password=generate_password_hash(pw, method='pbkdf2:sha256')))
+            db.session.commit()
+            flash("Account created! 😊", "success")
+            return redirect(url_for('login'))
+        flash("Username exists! ⚠️", "danger")
+    return render_template("signup.html")
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form.get('username')).first()
+        if user and check_password_hash(user.password, request.form.get('password')):
+            login_user(user)
+            flash("Welcome back! 👋", "success")
+            return redirect(url_for('home'))
+        flash("Invalid credentials! ❌", "danger")
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    logout_user()
+    flash("Logged out! 🔒", "success")
+    return redirect(url_for('login'))
+
+if __name__ == "__main__":
     app.run(debug=True)
