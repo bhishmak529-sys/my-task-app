@@ -3,57 +3,49 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import hmac
 import werkzeug.security
+from datetime import datetime
 
-# नए पाइथन वर्जन के लिए safe_str_cmp एरर का फिक्स
 werkzeug.security.safe_str_cmp = hmac.compare_digest
 from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key-bhishmak'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///final_task.db'  # 🚀 बिल्कुल नया डेटाबेस नाम ताकि फ्रेश टेबल बने
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kanban_pro.db' # 🚀 नया डेटाबेस ताकि नए कॉलम्स बन सकें
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# डेटाबेस और लॉगिन मैनेजर सेटअप
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- डेटाबेस मॉडल्स (Models) ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     
-    # ✅ ये प्रॉपर्टीज मैन्युअली जोड़ दी हैं ताकि 'no such column: user.is_active' एरर कभी न आए
     @property
-    def is_active(self):
-        return True
+    def is_active(self): return True
     @property
-    def is_authenticated(self):
-        return True
+    def is_authenticated(self): return True
     @property
-    def is_anonymous(self):
-        return False
-    def get_id(self):
-        return str(self.id)
+    def is_anonymous(self): return False
+    def get_id(self): return str(self.id)
 
-# सही जगह पर यूजर लोडर
+# 🚀 अपडेटेड टास्क मॉडल: जिसमें date और priority भी शामिल है
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    status = db.Column(db.String(50), default='Backlog') # Backlog, Todo, In Progress, Done
+    priority = db.Column(db.String(20), default='Medium') # High, Medium, Low
+    due_date = db.Column(db.String(50), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-class Todo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    status = db.Column(db.String(50), default='Todo')  # Todo, In Progress, Done
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-# 🚀 रेंडर सर्वर के लिए बिल्कुल सही जगह पर टेबल बनाने का कोड
 with app.app_context():
     db.create_all()
-
-# --- वेबसाइट के सारे राउट्स (Routes) ---
 
 @app.route('/')
 @login_required
@@ -71,7 +63,7 @@ def login():
             login_user(user)
             return redirect(url_for('index'))
         else:
-            flash('Login Unsuccessful. Please check username and password', 'danger')
+            flash('Invalid Username or Password', 'danger')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -89,7 +81,6 @@ def register():
         new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -103,8 +94,19 @@ def logout():
 @login_required
 def add_todo():
     title = request.form.get('title')
+    priority = request.form.get('priority', 'Medium')
+    due_date = request.form.get('due_date')
+    
+    if due_date:
+        # तारीख को अच्छे फॉर्मेट (DD-MM-YYYY) में बदलने के लिए
+        try:
+            date_obj = datetime.strptime(due_date, '%Y-%m-%d')
+            due_date = date_obj.strftime('%d %b %Y')
+        except:
+            pass
+
     if title:
-        new_todo = Todo(title=title, user_id=current_user.id)
+        new_todo = Todo(title=title, priority=priority, due_date=due_date, user_id=current_user.id)
         db.session.add(new_todo)
         db.session.commit()
     return redirect(url_for('index'))
