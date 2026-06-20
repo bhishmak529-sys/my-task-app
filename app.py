@@ -1,3 +1,6 @@
+import hmac
+import werkzeug.security
+werkzeug.security.safe_str_cmp = hmac.compare_digest
 import os
 from flask import Flask, render_template, url_for, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
