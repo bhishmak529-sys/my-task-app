@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'bhishmak_ka_secret_123'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trello_board_final.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trello_board.db' # 🚀 नया डेटाबेस नाम ताकि Render पर एरर न आए
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -23,7 +23,7 @@ def load_user(user_id):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.String(150), nullable=False) 
     tasks = db.relationship('Task', backref='owner', lazy=True)
 
 class Task(db.Model):
@@ -32,10 +32,11 @@ class Task(db.Model):
     category = db.Column(db.String(20), default='Personal')
     priority = db.Column(db.String(20), default='Medium')
     due_date = db.Column(db.String(50), nullable=True)
-    status = db.Column(db.String(50), default='Backlog')
+    status = db.Column(db.String(50), default='Backlog') # 🚀 डिफॉल्ट स्टेटस Backlog
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date_created = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
 
+# Render deployment ke liye tables create karna
 with app.app_context():
     db.create_all()
 
@@ -53,7 +54,8 @@ def add_task():
     category = request.form.get("category")
     priority = request.form.get("priority", "Medium")
     due_date = request.form.get("due_date")
-
+    
+    # Date formatting
     if due_date:
         try:
             date_obj = datetime.strptime(due_date, '%Y-%m-%d')
@@ -75,27 +77,28 @@ def edit_task(tid):
     if not task or task.user_id != current_user.id:
         flash("Task not found! ⚠️", "danger")
         return redirect(url_for('home'))
-
+        
     if request.method == 'POST':
         task.name = request.form.get("task_name")
         task.category = request.form.get("category")
         task.priority = request.form.get("priority")
         task.status = request.form.get("status")
-
+        
+        # Update due date
         new_date = request.form.get("due_date")
         if new_date:
             try:
                 date_obj = datetime.strptime(new_date, '%Y-%m-%d')
                 task.due_date = date_obj.strftime('%d %b %Y')
             except ValueError:
-                task.due_date = new_date
+                task.due_date = new_date # Keep old format if not picked from calendar
         else:
             task.due_date = None
-
+            
         db.session.commit()
         flash("Task updated! ✨", "success")
         return redirect(url_for('home'))
-
+        
     return render_template("edit.html", task=task)
 
 @app.route("/update/<int:tid>/<string:next_status>")
@@ -118,8 +121,7 @@ def delete_task(tid):
     return redirect(url_for('home'))
 
 @app.route("/about")
-def about():
-    return render_template("about.html")
+def about(): return render_template("about.html")
 
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
