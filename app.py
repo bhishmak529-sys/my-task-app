@@ -10,7 +10,7 @@ from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key-bhishmak'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///task.db'  # 🚀 नया डेटाबेस नाम ताकि एरर न आए
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///final_task.db'  # 🚀 बिल्कुल नया डेटाबेस नाम ताकि फ्रेश टेबल बने
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # डेटाबेस और लॉगिन मैनेजर सेटअप
@@ -24,17 +24,30 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+    
+    # ✅ ये प्रॉपर्टीज मैन्युअली जोड़ दी हैं ताकि 'no such column: user.is_active' एरर कभी न आए
+    @property
+    def is_active(self):
+        return True
+    @property
+    def is_authenticated(self):
+        return True
+    @property
+    def is_anonymous(self):
+        return False
+    def get_id(self):
+        return str(self.id)
+
+# सही जगह पर यूजर लोडर
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(50), default='Todo')  # Todo, In Progress, Done
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-# ✅ सही जगह पर यूजर लोडर ताकि 'User is not defined' एरर न आए
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 # 🚀 रेंडर सर्वर के लिए बिल्कुल सही जगह पर टेबल बनाने का कोड
 with app.app_context():
