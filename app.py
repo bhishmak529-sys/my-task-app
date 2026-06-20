@@ -9,8 +9,8 @@ werkzeug.security.safe_str_cmp = hmac.compare_digest
 from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
+app.config['SECRET_KEY'] = 'super-secret-key-bhishmak'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///task.db'  # 🚀 नया डेटाबेस नाम ताकि एरर न आए
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # डेटाबेस और लॉगिन मैनेजर सेटअप
@@ -19,26 +19,26 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# 🚀 रेंडर (Render) सर्वर के लिए डेटाबेस टेबल बनाने का सही तरीका
-with app.app_context():
-    db.create_all()
-
 # --- डेटाबेस मॉडल्स (Models) ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
 
-# ✅ इसे अब 'User' क्लास के नीचे रख दिया है ताकि Error न आए
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(50), default='Todo')  # Todo, In Progress, Done
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+# ✅ सही जगह पर यूजर लोडर ताकि 'User is not defined' एरर न आए
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# 🚀 रेंडर सर्वर के लिए बिल्कुल सही जगह पर टेबल बनाने का कोड
+with app.app_context():
+    db.create_all()
 
 # --- वेबसाइट के सारे राउट्स (Routes) ---
 
