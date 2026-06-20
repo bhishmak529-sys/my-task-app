@@ -9,7 +9,7 @@ werkzeug.security.safe_str_cmp = hmac.compare_digest
 from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key_here'  # आप इसे ऐसे ही रहने दे सकते हैं
+app.config['SECRET_KEY'] = 'your_secret_key_here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -19,7 +19,7 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# 🚀 रेंडर (Render) सर्ver के लिए डेटाबेस टेबल बनाने का सही तरीका
+# 🚀 रेंडर (Render) सर्वर के लिए डेटाबेस टेबल बनाने का सही तरीका
 with app.app_context():
     db.create_all()
 
@@ -29,15 +29,16 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
 
+# ✅ इसे अब 'User' क्लास के नीचे रख दिया है ताकि Error न आए
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(50), default='Todo')  # Todo, In Progress, Done
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 # --- वेबसाइट के सारे राउट्स (Routes) ---
 
@@ -67,7 +68,6 @@ def register():
         password = request.form.get('password')
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         
-        # चेक करें कि यूजर पहले से तो नहीं है
         user_exists = User.query.filter_by(username=username).first()
         if user_exists:
             flash('Username already exists!', 'danger')
