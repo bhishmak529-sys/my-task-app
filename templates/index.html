@@ -1,150 +1,69 @@
 {% extends 'base.html' %}
-{% block body %}
 
-<div class="card shadow p-4 mb-4 border-0 bg-white">
-    <h5 class="mb-3 text-dark fw-bold">Create New Kanban Card 🗒—</h5>
-    <form action="/" method="POST" class="row g-2">
-        <div class="col-md-4">
-            <input type="text" name="content" class="form-control" placeholder="What needs attention?" required>
-        </div>
-        <div class="col-md-2">
-            <select name="category" class="form-select">
-                <option value="General">General</option>
-                <option value="Study">Study 📚</option>
-                <option value="Work">Work 💼</option>
-                <option value="Personal">Personal ❤️</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select name="priority" class="form-select">
-                <option value="High">High</option>
-                <option value="Medium" selected>Medium</option>
-                <option value="Low">Low</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <input type="date" name="due_date" class="form-control" required>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-dark w-100">Add Card</button>
+{% block body %}
+<div class="container mt-4">
+    <h2>My Kanban Task Board</h2>
+    
+    <form action="/add" method="POST" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="title" class="form-control" placeholder="Enter new task..." required>
+            <button type="submit" class="btn btn-primary">Add Task</button>
         </div>
     </form>
-</div>
 
-<div class="row g-3">
-    {% for column_name, column_tasks in board.items() %}
-    <div class="col-12 col-md-3">
-        <div class="p-2 rounded bg-light border shadow-sm h-100" style="min-height: 550px;">
-            
-            <div class="d-flex justify-content-between align-items-center mb-3 px-2 pt-1 border-bottom pb-2">
-                <h6 class="fw-bold text-uppercase m-0 text-secondary">{{ column_name }}</h6>
-                <span class="badge bg-dark rounded-circle">{{ column_tasks|length }}</span>
-            </div>
-            
-            <div class="task-list">
-                {% for task in column_tasks %}
-                <div class="card p-3 mb-2 border-0 shadow-sm bg-white">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="badge bg-secondary small" style="font-size: 10px;">{{ task.category }}</span>
-                        <span class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-info{% endif %} small" style="font-size: 10px;">
-                            {{ task.priority }}
-                        </span>
-                    </div>
-                    
-                    <h6 class="card-title fw-bold text-dark mb-2">{{ task.content }}</h6>
-                    
-                    <div class="text-muted small mb-3" style="font-size: 11px;">
-                        📅 {% if task.due_date < today and column_name != 'Done' %}
-                            <span class="text-danger fw-bold">Overdue: {{ task.due_date.strftime('%d %b') }} ⚠️</span>
-                        {% else %}
-                            {{ task.due_date.strftime('%d %b, %Y') }}
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between align-items-center border-top pt-2">
-                        <div>
-                            <a href="/edit/{{ task.id }}" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 11px;">Edit</a>
-                            <a href="/delete/{{ task.id }}" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 11px;">Delete</a>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-light p-2">
+                <h5 class="card-title text-center text-danger">To Do</h5>
+                <hr>
+                {% for todo in todos %}
+                    {% if todo.status == 'Todo' %}
+                        <div class="card mb-2 p-2">
+                            <p>{{ todo.title }}</p>
+                            <div class="d-flex justify-content-between">
+                                <a href="/update/{{ todo.id }}/In Progress" class="btn btn-sm btn-warning">Start</a>
+                                <a href="/delete/{{ todo.id }}" class="btn btn-sm btn-danger">Delete</a>
+                            </div>
                         </div>
-                        {% if column_name != 'Done' %}
-                        <a href="/move_next/{{ task.id }}" class="btn btn-sm btn-primary py-0 px-2" style="font-size: 11px;">Move Next ➔</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% else %}
-                <p class="text-center text-muted py-4 small">No tasks</p>
+                    {% endif %}
                 {% endfor %}
             </div>
+        </div>
 
+        <div class="col-md-4">
+            <div class="card bg-light p-2">
+                <h5 class="card-title text-center text-warning">In Progress</h5>
+                <hr>
+                {% for todo in todos %}
+                    {% if todo.status == 'In Progress' %}
+                        <div class="card mb-2 p-2">
+                            <p>{{ todo.title }}</p>
+                            <div class="d-flex justify-content-between">
+                                <a href="/update/{{ todo.id }}/Done" class="btn btn-sm btn-success">Complete</a>
+                                <a href="/delete/{{ todo.id }}" class="btn btn-sm btn-danger">Delete</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light p-2">
+                <h5 class="card-title text-center text-success">Done</h5>
+                <hr>
+                {% for todo in todos %}
+                    {% if todo.status == 'Done' %}
+                        <div class="card mb-2 p-2">
+                            <p style="text-decoration: line-through;">{{ todo.title }}</p>
+                            <div class="text-end">
+                                <a href="/delete/{{ todo.id }}" class="btn btn-sm btn-danger">Delete</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-    {% endfor %}
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-  
-    const moveButtons = document.querySelectorAll('a[href*="/move_next/"]');
-    moveButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const url = this.getAttribute('href');
-            const card = this.closest('.card');
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const currentColumn = card.closest('.col-md-3');
-                        const nextColumn = currentColumn.nextElementSibling;
-                        if (nextColumn) {
-                            const taskList = nextColumn.querySelector('.task-list');
-                            taskList.appendChild(card);
-                            if (data.new_status === 'Done') {
-                                button.remove();
-                            }
-                            updateTaskCounts();
-                        }
-                    }
-                });
-        });
-    });
-
-    
-    const deleteButtons = document.querySelectorAll('a[href*="/delete/"]');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            
-            e.preventDefault();
-            
-            if (confirm('Are you sure you want to delete this card?')) {
-                const url = this.getAttribute('href');
-                const card = this.closest('.card'); 
-                
-               
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                           
-                            card.remove();
-                            
-                            updateTaskCounts();
-                        }
-                    });
-            }
-        });
-    });
-
-    
-    function updateTaskCounts() {
-        document.querySelectorAll('.col-md-3').forEach(col => {
-            const countBadge = col.querySelector('.badge');
-            const totalCards = col.querySelectorAll('.task-list .card').length;
-            countBadge.textContent = totalCards;
-        });
-    }
-});
-</script>
-
 {% endblock %}
