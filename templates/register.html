@@ -1,38 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup - Task Manager</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="main-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div id="flash-container">
-            {% for category, message in messages %}
-              <div class="flash-alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-            </div>
-            <script>
-              setTimeout(function() {
-                var fc = document.getElementById('flash-container');
-                if (fc) { fc.style.opacity = "0"; setTimeout(() => fc.remove(), 600); }
-              }, 3000);
-            </script>
-          {% endif %}
-        {% endwith %}
-
-        <h1 style="text-align:center; color: #1e293b;">Join Us! 🚀</h1>
+{% extends "base.html" %}
+{% block body %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4 card shadow-lg p-4 border-0" style="background: #ffffff; color: #0f172a; border-radius: 12px;">
+        <h2 class="text-center mb-4 fw-bold">Join Us 🚀</h2>
         <form method="POST">
-            <input type="text" name="username" placeholder="Choose Username" style="width:94%; margin-bottom:10px;" required>
-            <input type="password" name="password" placeholder="Choose Password" style="width:94%; margin-bottom:15px;" required>
-            <button type="submit" class="add-btn" style="width:100%; background: #10b981;">Register Free</button>
+            <input type="text" name="username" class="form-control mb-3" placeholder="Choose Username" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;" required>
+            <input type="password" name="password" class="form-control mb-3" placeholder="Set Password" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;" required>
+            <button type="submit" class="btn btn-success w-100 fw-bold" style="background: #10b981; border: none; padding: 10px;">Create Account</button>
         </form>
-        <div style="text-align:center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-            <p style="color: #64748b; font-size: 14px;">Already a member? <a href="/login" style="color: #6366f1; text-decoration: none; font-weight: bold;">Login Here</a></p>
-        </div>
+        
+        <div style="text-align: center; margin: 15px 0; color: #64748b; font-size: 12px; font-weight: bold;">OR</div>
+        <a href="/login/google" class="btn w-100" style="background: white; color: #333; border: 2px solid #e2e8f0; font-weight: bold; text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; border-radius: 8px;">
+            <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google Logo"> Sign up with Google
+        </a>
+
+        <p class="mt-4 text-center small" style="color: #64748b;">Already have account? <a href="/login" style="color: #6366f1; text-decoration: none; font-weight: bold;">Login</a></p>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
