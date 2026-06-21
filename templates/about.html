@@ -1,1 +1,46 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - TaskPro Elite</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="board-container" style="max-width: 600px; margin-top: 50px;">
+        
+        <div class="header-card" style="justify-content: center; text-align: center;">
+            <div>
+                <h1>ℹ️ About TaskPro Elite</h1>
+                <p style="margin-top: 10px;">The Ultimate Kanban Board</p>
+            </div>
+        </div>
+        
+        <div class="task-card" style="text-align: center; padding: 40px;">
+            <h2 class="task-title" style="font-size: 24px;">Welcome to the Elite Club! 🚀</h2>
+            
+            <p style="color: #94a3b8; line-height: 1.8; font-size: 16px; margin-bottom: 20px;">
+                TaskPro Elite is a highly advanced, secure, and smart productivity tool. 
+                Built specially to track day-to-day tasks with an interactive Kanban board interface.
+            </p>
+
+            <div style="margin-bottom: 30px;">
+                <p style="color: #94a3b8; font-weight: bold; margin-bottom: 10px;">✨ Super Features ✨</p>
+                <span class="badge badge-high" style="font-size: 12px; padding: 6px 12px;">Google Login 🔐</span>
+                <span class="badge badge-medium" style="font-size: 12px; padding: 6px 12px;">Auto-Dates 📅</span>
+                <span class="badge badge-low" style="font-size: 12px; padding: 6px 12px;">Dark/Light Mode 🌗</span>
+            </div>
+            
+            <a href="/" class="btn-action btn-next" style="padding: 10px 25px; font-size: 14px; text-decoration: none; display: inline-block;">⬅️ Back to Board</a>
+        </div>
+
+    </div>
+
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+</body>
+</html>
