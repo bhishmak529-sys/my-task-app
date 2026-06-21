@@ -3,176 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Task Manager Pro</title>
-    <link rel="stylesheet" href="/static/style.css">
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>TaskPro Elite</title>
     <style>
-        .about-card {
-            background: #fff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            text-align: left; /* Text professional lage */
-        }
-        
-        .hero-section {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 20px;
-        }
-        
-        .app-logo {
-            font-size: 50px;
-            background: #f1f5f9;
+        /* 🚀 Alert Message को चमकदार और प्रीमियम बनाने की CSS */
+        .custom-alert {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border: none !important;
+            border-left: 6px solid #6366f1 !important; /* ब्लू साइड बॉर्डर */
+            border-radius: 8px !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+            font-size: 15px;
             padding: 15px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-            display: inline-block;
+            margin-bottom: 20px;
         }
-        
-        .hero-section h1 {
-            color: #1e293b;
-            margin: 0;
-            font-size: 28px;
-        }
-        
-        .hero-section p {
-            color: #6366f1;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .section-title {
-            color: #1e293b;
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            border-left: 4px solid #6366f1;
-            padding-left: 10px;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .icon {
-            font-size: 20px;
-            margin-right: 15px;
-            color: #6366f1;
-        }
-        
-        .item-text h4 {
-            margin: 0;
-            color: #1e293b;
-        }
-        
-        .item-text p {
-            margin: 5px 0 0;
-            color: #64748b;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .developer-section {
-            text-align: center;
-            margin-top: 35px;
-            background: #f1f5f9;
-            padding: 20px;
-            border-radius: 10px;
-        }
-        
-        .developer-section p {
-            color: #64748b;
-            margin: 0;
-        }
-        
-        .developer-name {
-            color: #1e293b;
-            font-weight: 700;
-            font-size: 18px;
-            margin-top: 5px;
-        }
-
-        /* Mobile specific adjustments for About Page contents (Restored) */
-        @media (max-width: 480px) {
-            .hero-section h1 { font-size: 24px; }
-            .app-logo { font-size: 40px; }
-            .icon { font-size: 18px; }
-            .item-text h4 { font-size: 14px; }
-            .item-text p { font-size: 12px; }
-        }
-
+        .btn-close { filter: none !important; }
     </style>
 </head>
-<body>
-    <div class="main-container">
-        <div class="about-card">
-            
-            <div class="hero-section">
-                <div class="app-logo">🚀</div>
-                <h1>Task Manager Pro</h1>
-                <p>Designed for Efficiency, Built for Speed</p>
-            </div>
-            
-            <div class="section-title">Our Mission</div>
-            <p style="color: #64748b; line-height: 1.6; font-size: 14px;">
-                Task Manager Pro is designed to help individuals and teams organize their day, prioritize work, and achieve their goals faster. We believe in simplicity and focus, allowing you to manage your work seamlessly without clutter.
-            </p>
-
-            <div class="section-title">Key Features 🌟</div>
-            
-            <div class="feature-item">
-                <div class="icon">🔒</div>
-                <div class="item-text">
-                    <h4>Secure Authentication</h4>
-                    <p>Advanced password hashing ensures your account and tasks remain safe and private.</p>
-                </div>
-            </div>
-            
-            <div class="feature-item">
-                <div class="icon">🔄</div>
-                <div class="item-text">
-                    <h4>Smart Sorting</h4>
-                    <p>Done tasks automatically move to the bottom, keeping your active list clutter-free.</p>
-                </div>
-            </div>
-            
-            <div class="feature-item">
-                <div class="icon">📅</div>
-                <div class="item-text">
-                    <h4>Timestamps</h4>
-                    <p>Track exactly when each task was created to better manage your workflow.</p>
-                </div>
-            </div>
-
-            <div class="section-title">Powered By 🛠️</div>
-            
-            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <span style="background: #f1f5f9; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #475569;">Python / Flask</span>
-                <span style="background: #f1f5f9; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #475569;">SQLAlchemy</span>
-                <span style="background: #f1f5f9; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #475569;">Flask-Migrate</span>
-                <span style="background: #f1f5f9; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #475569;">Flask-Login</span>
-            </div>
-
-            <div class="developer-section">
-                <p>Developed with passion by</p>
-                <div class="developer-name">Bhishmak</div>
-                <p style="font-size: 12px; margin-top: 5px;">Lead Software Engineer</p>
-            </div>
-
-            <div class="footer-section" style="text-align: center; margin-top: 25px;">
-                <a href="/" class="about-link" style="font-weight: bold; text-decoration: none; color: #6366f1;">⬅️ Back to My Tasks</a>
-            </div>
-
+<body class="bg-light" style="background-color: #0f172a !important;">
+    <div class="container mt-4">
+        
+        <div style="max-width: 400px; margin: 0 auto;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert custom-alert alert-dismissible fade show text-center fw-bold" role="alert">
+                    🔒 {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
         </div>
+
+        {% block body %}{% endblock %}
+        
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
