@@ -1,32 +1,148 @@
-body { background: #0f172a; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; color: #333; }
-.board-container { max-width: 1400px; margin: 0 auto; background: transparent; }
+/* ==========================================
+   1. BASE STYLES & LAYOUT (Default Dark Mode)
+   ========================================== */
+body { 
+    background: #0f172a; 
+    font-family: 'Segoe UI', sans-serif; 
+    margin: 0; 
+    padding: 20px; 
+    color: #333; 
+    transition: background 0.3s, color 0.3s;
+}
+.board-container { 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    background: transparent; 
+}
 
-/* Header & Forms */
-.header-card { background: #1e293b; color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
+/* Header Section */
+.header-card { 
+    background: #1e293b; 
+    color: white; 
+    padding: 20px; 
+    border-radius: 12px; 
+    margin-bottom: 20px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 15px;
+}
 .header-card h1 { margin: 0; font-size: 26px; color: #f8fafc; }
-.header-card p { margin: 0; color: #94a3b8; margin-top: 5px;}
-.top-links a { color: #94a3b8; text-decoration: none; font-size: 14px; margin-left: 15px; font-weight: 500;}
+.header-card p { margin: 0; color: #94a3b8; margin-top: 5px; }
+.top-links a { 
+    color: #94a3b8; 
+    text-decoration: none; 
+    font-size: 14px; 
+    margin-left: 15px; 
+    font-weight: 500; 
+    transition: color 0.2s;
+}
 .top-links a:hover { color: white; }
 
-.add-task-form { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-.add-task-form input, .add-task-form select { flex: 1; min-width: 150px; padding: 12px; border: 1px solid #334155; border-radius: 8px; background: #0f172a; color: white; outline: none; }
-.add-task-form button { background: #6366f1; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+/* Add Task Form */
+.add-task-form { 
+    background: #1e293b; 
+    padding: 20px; 
+    border-radius: 12px; 
+    margin-bottom: 20px; 
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+}
+.add-task-form input, .add-task-form select { 
+    flex: 1; 
+    min-width: 150px; 
+    padding: 12px; 
+    border: 1px solid #334155; 
+    border-radius: 8px; 
+    background: #0f172a; 
+    color: white; 
+    outline: none; 
+}
+.add-task-form button { 
+    background: #6366f1; 
+    color: white; 
+    border: none; 
+    padding: 12px 24px; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: 0.3s; 
+}
 .add-task-form button:hover { background: #4f46e5; }
 
-/* Kanban Board Layout */
-.kanban-board { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
+/* ==========================================
+   2. KANBAN BOARD & COLUMNS
+   ========================================== */
+.kanban-board { 
+    display: flex; 
+    gap: 20px; 
+    overflow-x: auto; 
+    padding-bottom: 10px; 
+}
 .kanban-board::-webkit-scrollbar { height: 8px; }
 .kanban-board::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 
-.kanban-column { flex: 1; min-width: 300px; background: #1e293b; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-.col-header { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 16px; border-bottom: 2px solid #334155; padding-bottom: 10px; }
-.col-count { background: #334155; padding: 2px 10px; border-radius: 12px; font-size: 12px; color: white; }
+.kanban-column { 
+    flex: 1; 
+    min-width: 300px; 
+    background: #1e293b; 
+    border-radius: 12px; 
+    padding: 15px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    transition: background 0.3s, border 0.3s;
+}
+.col-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    color: white; 
+    font-weight: bold; 
+    font-size: 16px; 
+    border-bottom: 2px solid #334155; 
+    padding-bottom: 10px; 
+}
+.col-count { 
+    background: #334155; 
+    padding: 2px 10px; 
+    border-radius: 12px; 
+    font-size: 12px; 
+    color: white; 
+}
 
-/* Task Cards */
-.task-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s; }
-.task-card:hover { transform: translateY(-3px); border-color: #475569; }
-.task-title { color: #f8fafc; font-weight: 600; margin-bottom: 15px; font-size: 16px; line-height: 1.4; }
-.task-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+/* ==========================================
+   3. TASK CARDS & BADGES
+   ========================================== */
+.task-card { 
+    background: #0f172a; 
+    padding: 15px; 
+    border-radius: 8px; 
+    border: 1px solid #334155; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+    transition: transform 0.2s, border-color 0.2s, opacity 0.2s; 
+}
+.task-card:hover { 
+    transform: translateY(-3px); 
+    border-color: #475569; 
+}
+.task-title { 
+    color: #f8fafc; 
+    font-weight: 600; 
+    margin-bottom: 15px; 
+    font-size: 16px; 
+    line-height: 1.4; 
+}
+.task-meta { 
+    display: flex; 
+    gap: 6px; 
+    flex-wrap: wrap; 
+    margin-bottom: 12px; 
+}
 
 /* Badges */
 .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
@@ -36,25 +152,29 @@ body { background: #0f172a; font-family: 'Segoe UI', sans-serif; margin: 0; padd
 .badge-low { background: #3b82f6; color: white; }
 .badge-date { background: #10b981; color: #064e3b; }
 
-/* Actions */
-.task-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #334155; padding-top: 12px; }
+/* Actions Inside Cards */
+.task-actions { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-top: 1px solid #334155; 
+    padding-top: 12px; 
+}
 .btn-action { text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; }
-.btn-next { background: #6366f1; color: white; }
 .btn-edit { background: #334155; color: #cbd5e1; }
-.btn-delete { color: #ef4444; margin-left: 5px;}
+.btn-delete { color: #ef4444; margin-left: 5px; text-decoration: none; }
 
-/* Flash Alerts */
+/* ==========================================
+   4. FLASH ALERTS
+   ========================================== */
 #flash-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; }
 .flash-alert { padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; }
 .alert-success { background: #10b981; color: white; }
 .alert-danger { background: #ef4444; color: white; }
 
-@media (max-width: 768px) {
-    .kanban-column { min-width: 85vw; }
-    .add-task-form { flex-direction: column; }
-}
-
-/* ☀️ Light Mode Theme Overrides */
+/* ==========================================
+   5. ☀️ LIGHT MODE THEME OVERRIDES
+   ========================================= */
 body.light-mode { background: #f8fafc; color: #0f172a; }
 
 body.light-mode .header-card, 
@@ -71,7 +191,6 @@ body.light-mode .col-header { color: #0f172a; }
 
 body.light-mode .top-links a, 
 body.light-mode .header-card p { color: #475569; }
-
 body.light-mode .top-links a:hover { color: #0f172a; }
 
 body.light-mode input, 
@@ -89,11 +208,27 @@ body.light-mode .task-card {
     border: 1px solid #e2e8f0; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
 }
-
 body.light-mode .task-card:hover { 
     border-color: #cbd5e1; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
 }
-
 body.light-mode .task-actions { border-top: 1px solid #e2e8f0; }
 body.light-mode .btn-edit { background: #e2e8f0; color: #475569; }
+
+/* ==========================================
+   6. 🚀 DRAG & DROP SPECIAL EFFECTS
+   ========================================== */
+.task-card { cursor: grab; }
+.task-card:active { cursor: grabbing; }
+
+/* Drag checking effect on column */
+.kanban-column.drag-over { 
+    background: rgba(99, 102, 241, 0.15) !important; 
+    border: 2px dashed #6366f1 !important; 
+}
+
+/* Responsive Mobile Layout */
+@media (max-width: 768px) {
+    .kanban-column { min-width: 85vw; }
+    .add-task-form { flex-direction: column; }
+}
