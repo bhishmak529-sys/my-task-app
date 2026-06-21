@@ -30,6 +30,7 @@
                 <p>Welcome back, <b>{{ user_name }}</b>!</p>
             </div>
             <div class="top-links">
+                <a href="#" id="theme-toggle">☀️ Light Mode</a>
                 <a href="/about">ℹ️ About</a>
                 <a href="/logout">🚪 Logout</a>
             </div>
@@ -47,7 +48,6 @@
                 <option value="Medium" selected>🟡 Medium</option>
                 <option value="Low">🔵 Low</option>
             </select>
-            <input type="date" name="due_date">
             <button type="submit">+ Add to Backlog</button>
         </form>
 
@@ -95,5 +95,30 @@
             {% endfor %}
         </div>
     </div>
+
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        
+        // 1. चेक करो कि यूज़र को कौन सा मोड पसंद था
+        if (localStorage.getItem('theme') === 'light') {
+            body.classList.add('light-mode');
+            themeToggle.innerHTML = '🌙 Dark Mode';
+        }
+
+        // 2. बटन दबाने पर थीम बदलो
+        themeToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            body.classList.toggle('light-mode');
+            
+            if (body.classList.contains('light-mode')) {
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '🌙 Dark Mode';
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '☀️ Light Mode';
+            }
+        });
+    </script>
 </body>
 </html>
