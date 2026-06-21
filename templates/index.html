@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskPro Elite - Board</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* 🚀 Live Search Bar Styles */
+        .search-box {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            background: #1e293b;
+            color: white;
+            outline: none;
+            font-size: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        body.light-mode .search-box {
+            background: #ffffff;
+            color: #0f172a;
+            border-color: #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 <body>
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -23,12 +45,18 @@
       {% endif %}
     {% endwith %}
 
-    <div class="board-container">
-        <div class="header-card">
-            <div>
-                <h1>TaskPro Elite 🚀</h1>
-                <p>Welcome back, <b>{{ user_name }}</b>!</p>
+    <div class="header-card">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                {% if session.get('profile_pic') %}
+                <img src="{{ session.get('profile_pic') }}" alt="User DP" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #6366f1; object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                {% endif %}
+                <div>
+                    <h1>TaskPro Elite 🚀</h1>
+                    <p>Welcome back, <b>{{ user_name }}</b>!</p>
+                </div>
             </div>
+            
+            <div class="top-links">
             <div class="top-links">
                 <a href="#" id="theme-toggle">☀️ Light Mode</a>
                 <a href="/about">ℹ️ About</a>
@@ -51,23 +79,25 @@
             <button type="submit">+ Add to Backlog</button>
         </form>
 
+        <input type="text" id="live-search" class="search-box" placeholder="🔍 Search tasks by name, category, or priority...">
+
         <div class="kanban-board">
             {% set statuses = [
-                ('Backlog', '📁 Backlog', 'To Do', 'Move to To Do'),
-                ('To Do', '📋 To Do', 'In Progress', 'Start Work'),
-                ('In Progress', '⚡ In Progress', 'Done', 'Finish'),
-                ('Done', '✅ Done', None, None)
+                ('Backlog', '📁 Backlog'),
+                ('To Do', '📋 To Do'),
+                ('In Progress', '⚡ In Progress'),
+                ('Done', '✅ Done')
             ] %}
 
-            {% for status_key, status_title, next_status, next_label in statuses %}
-            <div class="kanban-column">
+            {% for status_key, status_title in statuses %}
+            <div class="kanban-column" data-status="{{ status_key }}" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
                 <div class="col-header">
                     <span>{{ status_title }}</span>
                     <span class="col-count">{{ tasks|selectattr('status', 'equalto', status_key)|list|length }}</span>
                 </div>
                 
                 {% for t in tasks if t.status == status_key %}
-                <div class="task-card">
+                <div class="task-card" draggable="true" ondragstart="drag(event)" data-id="{{ t.id }}">
                     <div class="task-meta">
                         <span class="badge badge-cat">{{ t.category }}</span>
                         <span class="badge badge-{{ t.priority|lower }}">{{ t.priority }}</span>
@@ -85,9 +115,6 @@
                             <a href="/edit/{{ t.id }}" class="btn-action btn-edit">Edit</a>
                             <a href="/delete/{{ t.id }}" class="btn-action btn-delete">Delete</a>
                         </div>
-                        {% if next_status %}
-                        <a href="/update/{{ t.id }}/{{ next_status }}" class="btn-action btn-next">{{ next_label }} ➔</a>
-                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -97,20 +124,16 @@
     </div>
 
     <script>
+        // --- Theme Switcher ---
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
-        
-        // 1. चेक करो कि यूज़र को कौन सा मोड पसंद था
         if (localStorage.getItem('theme') === 'light') {
             body.classList.add('light-mode');
             themeToggle.innerHTML = '🌙 Dark Mode';
         }
-
-        // 2. बटन दबाने पर थीम बदलो
         themeToggle.addEventListener('click', (e) => {
             e.preventDefault();
             body.classList.toggle('light-mode');
-            
             if (body.classList.contains('light-mode')) {
                 localStorage.setItem('theme', 'light');
                 themeToggle.innerHTML = '🌙 Dark Mode';
@@ -118,6 +141,60 @@
                 localStorage.setItem('theme', 'dark');
                 themeToggle.innerHTML = '☀️ Light Mode';
             }
+        });
+
+        // --- Drag and Drop Magic ---
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(ev) {
+            ev.currentTarget.classList.remove('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("taskId", ev.currentTarget.getAttribute('data-id'));
+            setTimeout(() => { ev.target.style.opacity = "0.5"; }, 0);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+            
+            let taskId = ev.dataTransfer.getData("taskId");
+            let newStatus = ev.currentTarget.getAttribute('data-status');
+            
+            fetch('/update_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_id: taskId, new_status: newStatus })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    window.location.reload(); 
+                }
+            });
+        }
+
+        // --- 🚀 Live Search Magic ---
+        const searchInput = document.getElementById('live-search');
+        searchInput.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase();
+            const taskCards = document.querySelectorAll('.task-card');
+
+            taskCards.forEach(card => {
+                const title = card.querySelector('.task-title').innerText.toLowerCase();
+                const meta = card.querySelector('.task-meta').innerText.toLowerCase();
+
+                // अगर सर्च किया गया शब्द टाइटल या केटेगरी में है, तो कार्ड दिखाओ, वरना छुपा दो
+                if (title.includes(searchText) || meta.includes(searchText)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         });
     </script>
 </body>
