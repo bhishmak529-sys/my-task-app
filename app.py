@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,14 +11,12 @@ app.config['SECRET_KEY'] = 'bhishmak_ka_secret_123'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trello_board_final.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 🚀 तुम्हारी असली Google Keys (मैंने यहाँ सेट कर दी हैं)
 app.config['GOOGLE_CLIENT_ID'] = '126513598147-gqe13705587dm1gbvhg6en6h4q32t1p0.apps.googleusercontent.com'
 app.config['GOOGLE_CLIENT_SECRET'] = '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'
 
 db = SQLAlchemy(app)
 oauth = OAuth(app)
 
-# Google OAuth Setup
 google = oauth.register(
     name='google',
     client_id=app.config['GOOGLE_CLIENT_ID'],
@@ -55,7 +53,7 @@ class Task(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- Google Login Routes 🚀 ---
+# --- Google Login Routes ---
 @app.route('/login/google')
 def google_login():
     redirect_uri = url_for('google_authorize', _external=True)
@@ -66,6 +64,7 @@ def google_authorize():
     token = google.authorize_access_token()
     user_info = google.get('https://openidconnect.googleapis.com/v1/userinfo').json()
     email = user_info.get('email')
+    picture = user_info.get('picture') 
     
     user = User.query.filter_by(username=email).first()
     if not user:
@@ -76,10 +75,11 @@ def google_authorize():
         db.session.commit()
     
     login_user(user)
+    session['profile_pic'] = picture 
     flash(f"Welcome back! Logged in as {email} 🚀", "success")
     return redirect(url_for('home'))
 
-# --- App Routes ---
+
 @app.route("/")
 @login_required
 def home():
@@ -100,7 +100,7 @@ def add_task():
         new_task = Task(name=name, user_id=current_user.id, category=category, priority=priority, due_date=auto_date)
         db.session.add(new_task)
         db.session.commit()
-        flash("Task added with today's date! 🚀", "success")
+        flash("Task added! 🚀", "success")
     return redirect(url_for('home'))
 
 @app.route("/edit/<int:tid>", methods=['GET', 'POST'])
@@ -108,7 +108,6 @@ def add_task():
 def edit_task(tid):
     task = Task.query.get(tid)
     if not task or task.user_id != current_user.id:
-        flash("Task not found! ⚠️", "danger")
         return redirect(url_for('home'))
 
     if request.method == 'POST':
@@ -116,31 +115,12 @@ def edit_task(tid):
         task.category = request.form.get("category")
         task.priority = request.form.get("priority")
         task.status = request.form.get("status")
-
-        new_date = request.form.get("due_date")
-        if new_date:
-            try:
-                date_obj = datetime.strptime(new_date, '%Y-%m-%d')
-                task.due_date = date_obj.strftime('%d %b %Y')
-            except ValueError:
-                task.due_date = new_date
-        else:
-            task.due_date = None
-
+        task.due_date = request.form.get("due_date")
         db.session.commit()
         flash("Task updated! ✨", "success")
         return redirect(url_for('home'))
 
     return render_template("edit.html", task=task)
-
-@app.route("/update/<int:tid>/<string:next_status>")
-@login_required
-def update_task(tid, next_status):
-    task = Task.query.get(tid)
-    if task and task.user_id == current_user.id:
-        task.status = next_status
-        db.session.commit()
-    return redirect(url_for('home'))
 
 @app.route("/delete/<int:tid>")
 @login_required
@@ -151,6 +131,20 @@ def delete_task(tid):
         db.session.commit()
         flash("Task removed! 🗑️", "danger")
     return redirect(url_for('home'))
+
+@app.route("/update_status", methods=["POST"])
+@login_required
+def update_status():
+    data = request.get_json()
+    task_id = data.get('task_id')
+    new_status = data.get('new_status')
+
+    task = Task.query.get(task_id)
+    if task and task.user_id == current_user.id:
+        task.status = new_status
+        db.session.commit()
+        return jsonify({"success": True})
+    return jsonify({"success": False})
 
 @app.route("/about")
 def about():
@@ -174,7 +168,8 @@ def login():
         user = User.query.filter_by(username=request.form.get('username')).first()
         if user and check_password_hash(user.password, request.form.get('password')):
             login_user(user)
-            flash("Welcome back! 👋", "success")
+            
+            session['profile_pic'] = f"https://ui-avatars.com/api/?name={user.username}&background=6366f1&color=fff"
             return redirect(url_for('home'))
         flash("Invalid credentials! ❌", "danger")
     return render_template("login.html")
@@ -182,7 +177,7 @@ def login():
 @app.route("/logout")
 def logout():
     logout_user()
-    flash("Logged out! 🔒", "success")
+    session.pop('profile_pic', None) 
     return redirect(url_for('login'))
 
 if __name__ == "__main__":
