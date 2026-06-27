@@ -5,27 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskPro Elite - Board</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        /* 🚀 Live Search Bar Styles */
         .search-box {
-            width: 100%;
-            padding: 14px 15px;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            background: #1e293b;
-            color: white;
-            outline: none;
-            font-size: 15px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: all 0.3s;
+            width: 100%; padding: 14px 15px; border: 1px solid #334155; border-radius: 12px;
+            background: #1e293b; color: white; outline: none; font-size: 15px; margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.3s;
         }
         body.light-mode .search-box {
-            background: #ffffff;
-            color: #0f172a;
-            border-color: #e2e8f0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: #ffffff; color: #0f172a; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
+        
+        /* 🚀 Advanced Modal (Pop-up) Styles */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: #1e293b; color: white; padding: 25px; border-radius: 12px;
+            width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative; animation: fadeIn 0.3s ease;
+        }
+        body.light-mode .modal-box { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
+        .modal-close { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: #94a3b8; }
+        .modal-textarea {
+            width: 100%; height: 150px; background: #0f172a; color: white; border: 1px solid #334155;
+            border-radius: 8px; padding: 12px; outline: none; font-size: 14px; resize: none; margin-top: 15px;
+        }
+        body.light-mode .modal-textarea { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -45,7 +54,8 @@
       {% endif %}
     {% endwith %}
 
-    <div class="header-card">
+    <div class="board-container">
+        <div class="header-card">
             <div style="display: flex; align-items: center; gap: 15px;">
                 {% if session.get('profile_pic') %}
                 <img src="{{ session.get('profile_pic') }}" alt="User DP" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #6366f1; object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
@@ -55,9 +65,8 @@
                     <p>Welcome back, <b>{{ user_name }}</b>!</p>
                 </div>
             </div>
-            
             <div class="top-links">
-            <div class="top-links">
+                <a href="/export" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold;">📥 Export Board</a>
                 <a href="#" id="theme-toggle">☀️ Light Mode</a>
                 <a href="/about">ℹ️ About</a>
                 <a href="/logout">🚪 Logout</a>
@@ -83,21 +92,30 @@
 
         <div class="kanban-board">
             {% set statuses = [
-                ('Backlog', '📁 Backlog'),
-                ('To Do', '📋 To Do'),
-                ('In Progress', '⚡ In Progress'),
-                ('Done', '✅ Done')
+                ('Backlog', '📁 Backlog', 'To Do', 'Move to To Do'),
+                ('To Do', '📋 To Do', 'In Progress', 'Start Work'),
+                ('In Progress', '⚡ In Progress', 'Done', 'Finish'),
+                ('Done', '✅ Done', None, None)
             ] %}
 
-            {% for status_key, status_title in statuses %}
+            {% for status_key, status_title, next_status, next_label in statuses %}
             <div class="kanban-column" data-status="{{ status_key }}" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+                
                 <div class="col-header">
                     <span>{{ status_title }}</span>
-                    <span class="col-count">{{ tasks|selectattr('status', 'equalto', status_key)|list|length }}</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="col-count">{{ tasks|selectattr('status', 'equalto', status_key)|list|length }}</span>
+                        
+                        {% if status_key == 'Done' %}
+                        <form action="/clear_done" method="POST" onsubmit="return confirm('Are you sure you want to delete all completed tasks?');" style="margin: 0;">
+                            <button type="submit" class="badge badge-high" style="border: none; cursor: pointer; padding: 5px 10px;">🧹 Clear All</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 {% for t in tasks if t.status == status_key %}
-                <div class="task-card" draggable="true" ondragstart="drag(event)" data-id="{{ t.id }}">
+                <div class="task-card" draggable="true" ondragstart="drag(event)" data-id="{{ t.id }}" data-desc="{{ t.description or '' }}" onclick="openModal(this, event)">
                     <div class="task-meta">
                         <span class="badge badge-cat">{{ t.category }}</span>
                         <span class="badge badge-{{ t.priority|lower }}">{{ t.priority }}</span>
@@ -105,16 +123,19 @@
                         <span class="badge badge-date">📅 {{ t.due_date }}</span>
                         {% endif %}
                     </div>
-                    
                     <div class="task-title" {% if t.status == 'Done' %}style="text-decoration: line-through; opacity: 0.5;"{% endif %}>
                         {{ t.name }}
                     </div>
                     
                     <div class="task-actions">
                         <div>
-                            <a href="/edit/{{ t.id }}" class="btn-action btn-edit">Edit</a>
-                            <a href="/delete/{{ t.id }}" class="btn-action btn-delete">Delete</a>
+                            <a href="/edit/{{ t.id }}" class="btn-action btn-edit" onclick="event.stopPropagation();">Edit</a>
+                            <a href="/delete/{{ t.id }}" class="btn-action btn-delete" onclick="event.stopPropagation();">Delete</a>
                         </div>
+                        
+                        {% if next_status %}
+                        <a href="/move/{{ t.id }}/{{ next_status }}" class="btn-action mobile-move-btn" data-next="{{ next_status }}" style="background: #6366f1; color: white;" onclick="event.stopPropagation();">{{ next_label }} ➔</a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -123,8 +144,20 @@
         </div>
     </div>
 
+    <div id="descModal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h3 id="modal-task-title" style="margin: 0; font-size: 20px;">Task Details</h3>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 5px;">Add extra details, notes, or useful URLs below:</p>
+            <textarea id="modal-desc-text" class="modal-textarea" placeholder="Type task details here..."></textarea>
+            <div style="text-align: right; margin-top: 15px;">
+                <button onclick="closeModal()" style="background: transparent; color: #94a3b8; border: none; margin-right: 15px; cursor: pointer; font-weight: bold;">Cancel</button>
+                <button onclick="saveDescriptionData()" style="background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Save Details</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- Theme Switcher ---
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
         if (localStorage.getItem('theme') === 'light') {
@@ -143,57 +176,83 @@
             }
         });
 
-        // --- Drag and Drop Magic ---
-        function allowDrop(ev) {
-            ev.preventDefault();
-            ev.currentTarget.classList.add('drag-over');
-        }
-
-        function dragLeave(ev) {
-            ev.currentTarget.classList.remove('drag-over');
-        }
-
-        function drag(ev) {
-            ev.dataTransfer.setData("taskId", ev.currentTarget.getAttribute('data-id'));
-            setTimeout(() => { ev.target.style.opacity = "0.5"; }, 0);
-        }
-
-        function drop(ev) {
-            ev.preventDefault();
-            ev.currentTarget.classList.remove('drag-over');
+        // 🚀 Modal JavaScript Magic Logic
+        let activeCard = null;
+        function openModal(card, event) {
+            activeCard = card;
+            const taskName = card.querySelector('.task-title').innerText;
+            const currentDesc = card.getAttribute('data-desc');
             
-            let taskId = ev.dataTransfer.getData("taskId");
-            let newStatus = ev.currentTarget.getAttribute('data-status');
-            
-            fetch('/update_status', {
+            document.getElementById('modal-task-title').innerText = "📝 " + taskName;
+            document.getElementById('modal-desc-text').value = currentDesc;
+            document.getElementById('descModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('descModal').style.display = 'none';
+            activeCard = null;
+        }
+        function saveDescriptionData() {
+            if(!activeCard) return;
+            const taskId = activeCard.getAttribute('data-id');
+            const descValue = document.getElementById('modal-desc-text').value;
+
+            fetch('/save_description', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ task_id: taskId, new_status: newStatus })
+                body: JSON.stringify({ task_id: taskId, description: descValue })
             })
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    window.location.reload(); 
+                    activeCard.setAttribute('data-desc', descValue); // Update UI
+                    closeModal();
+                    alert("Details saved successfully! ✨");
                 }
             });
         }
 
-        // --- 🚀 Live Search Magic ---
+        function fireCelebration() {
+            var duration = 3 * 1000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0, y: 0.8 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1, y: 0.8 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+        function checkAndCelebrate(status) { if (status === 'Done') localStorage.setItem('trigger_pop', 'true'); }
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('trigger_pop') === 'true') { fireCelebration(); localStorage.removeItem('trigger_pop'); }
+        });
+
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        function drag(ev) {
+            ev.dataTransfer.setData("taskId", ev.currentTarget.getAttribute('data-id'));
+            setTimeout(() => { ev.target.style.opacity = "0.5"; }, 0);
+        }
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+            let taskId = ev.dataTransfer.getData("taskId");
+            let newStatus = ev.currentTarget.getAttribute('data-status');
+            checkAndCelebrate(newStatus);
+            fetch('/update_status', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_id: taskId, new_status: newStatus })
+            }).then(res => res.json()).then(data => { if(data.success) window.location.reload(); });
+        }
+
+        document.querySelectorAll('.mobile-move-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) { checkAndCelebrate(this.getAttribute('data-next')); });
+        });
+
         const searchInput = document.getElementById('live-search');
         searchInput.addEventListener('input', function() {
             const searchText = this.value.toLowerCase();
-            const taskCards = document.querySelectorAll('.task-card');
-
-            taskCards.forEach(card => {
+            document.querySelectorAll('.task-card').forEach(card => {
                 const title = card.querySelector('.task-title').innerText.toLowerCase();
                 const meta = card.querySelector('.task-meta').innerText.toLowerCase();
-
-                // अगर सर्च किया गया शब्द टाइटल या केटेगरी में है, तो कार्ड दिखाओ, वरना छुपा दो
-                if (title.includes(searchText) || meta.includes(searchText)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                card.style.display = (title.includes(searchText) || meta.includes(searchText)) ? 'block' : 'none';
             });
         });
     </script>
