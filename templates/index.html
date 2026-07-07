@@ -8,33 +8,69 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        .search-box {
-            width: 100%; padding: 14px 15px; border: 1px solid #334155; border-radius: 12px;
-            background: #1e293b; color: white; outline: none; font-size: 15px; margin-bottom: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.3s;
-        }
-        body.light-mode .search-box {
-            background: #ffffff; color: #0f172a; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
+        .search-box { width: 100%; padding: 14px 15px; border: 1px solid #334155; border-radius: 12px; background: #1e293b; color: white; outline: none; font-size: 15px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.3s; }
+        body.light-mode .search-box { background: #ffffff; color: #0f172a; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
-        /* 🚀 Advanced Modal (Pop-up) Styles */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;
-        }
-        .modal-box {
-            background: #1e293b; color: white; padding: 25px; border-radius: 12px;
-            width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative; animation: fadeIn 0.3s ease;
-        }
+        .progress-wrapper { background: #1e293b; padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        body.light-mode .progress-wrapper { background: #ffffff; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .progress-track { width: 100%; background: #0f172a; border-radius: 8px; height: 12px; overflow: hidden; margin-top: 10px; }
+        body.light-mode .progress-track { background: #e2e8f0; }
+        .progress-fill { height: 100%; transition: width 0.8s ease-in-out; border-radius: 8px; }
+        .text-progress-title { color: white; font-weight: bold; font-size: 16px; }
+        body.light-mode .text-progress-title { color: #0f172a; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: #1e293b; color: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; animation: fadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
         body.light-mode .modal-box { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
-        .modal-close { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: #94a3b8; }
-        .modal-textarea {
-            width: 100%; height: 150px; background: #0f172a; color: white; border: 1px solid #334155;
-            border-radius: 8px; padding: 12px; outline: none; font-size: 14px; resize: none; margin-top: 15px;
-        }
+        .modal-close { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: #94a3b8; transition: 0.2s; }
+        .modal-close:hover { color: white; }
+        body.light-mode .modal-close:hover { color: #0f172a; }
+        .modal-textarea { width: 100%; height: 80px; background: #0f172a; color: white; border: 1px solid #334155; border-radius: 8px; padding: 12px; outline: none; font-size: 14px; resize: none; margin-top: 15px; }
         body.light-mode .modal-textarea { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        /* 🚀 NAYA CSS: Subtasks Checklists ke liye */
+        .checklist-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #334155; }
+        body.light-mode .checklist-section { border-top-color: #cbd5e1; }
+        .checklist-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .checklist-input { flex-grow: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 13px; outline: none;}
+        body.light-mode .checklist-input { background: #f1f5f9; border-color: #cbd5e1; color: #0f172a; }
+        .checklist-add-btn { background: #6366f1; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;}
+        .subtask-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 6px; border: 1px solid transparent;}
+        body.light-mode .subtask-item { background: rgba(0,0,0,0.03); border-color: #e2e8f0; }
+        .subtask-item:hover { border-color: #334155; }
+        .subtask-title { flex-grow: 1; margin-left: 10px; font-size: 14px; color: #cbd5e1; transition: 0.2s;}
+        body.light-mode .subtask-title { color: #334155; }
+        .subtask-completed { text-decoration: line-through; opacity: 0.4; }
+        .subtask-delete { color: #ef4444; cursor: pointer; font-weight: bold; border: none; background: transparent; font-size: 14px;}
+        
+        .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #334155; }
+        body.light-mode .file-upload-section { border-top-color: #cbd5e1; }
+        .btn-submit-file { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin-top: 5px; }
+        
+        .lightbox-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; }
+        .lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); animation: zoomIn 0.3s ease; }
+        .lightbox-close-btn { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .lightbox-close-btn:hover { color: #f43f5e; transform: scale(1.1); }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .attachment-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .attachment-card { position: relative; width: 140px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        body.light-mode .attachment-card { background: #f8fafc; border-color: #cbd5e1; }
+        .attachment-card img { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; cursor: zoom-in; transition: transform 0.2s; }
+        .attachment-card img:hover { transform: scale(1.05); }
+        .attachment-link { font-size: 12px; color: #6366f1; text-decoration: none; margin-top: 8px; display: inline-block; font-weight: bold; }
+        .delete-badge-btn { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: 0.2s; z-index: 10; }
+        .delete-badge-btn:hover { background: #dc2626; transform: scale(1.15); }
+
+        .overdue-card { border-left: 5px solid #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
+        .due-soon-card { border-left: 5px solid #f59e0b !important; background: rgba(245, 158, 11, 0.1) !important; }
+        body.light-mode .overdue-card { background: #fee2e2 !important; border-color: #ef4444 !important; }
+        body.light-mode .due-soon-card { background: #fef3c7 !important; border-color: #f59e0b !important; }
+
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .badge-overdue { background: #ef4444 !important; color: white !important; animation: pulse-red 1.5s infinite; font-weight: bold; }
+        .badge-due-soon { background: #f59e0b !important; color: white !important; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -70,6 +106,18 @@
                 <a href="#" id="theme-toggle">☀️ Light Mode</a>
                 <a href="/about">ℹ️ About</a>
                 <a href="/logout">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="progress-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="text-progress-title">📊 Overall Board Progress</span>
+                <span style="font-weight: bold; font-size: 15px; color: {% if progress == 100 %}#10b981{% elif progress > 50 %}#3b82f6{% elif progress > 0 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ progress }}% Completed
+                </span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: {{ progress }}%; background: {% if progress == 100 %}#10b981{% elif progress > 50 %}#3b82f6{% elif progress > 0 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
             </div>
         </div>
 
@@ -115,14 +163,27 @@
                 </div>
                 
                 {% for t in tasks if t.status == status_key %}
-                <div class="task-card" draggable="true" ondragstart="drag(event)" data-id="{{ t.id }}" data-desc="{{ t.description or '' }}" onclick="openModal(this, event)">
+                <div class="task-card {% if t.is_overdue %}overdue-card{% elif t.is_due_soon %}due-soon-card{% endif %}" draggable="true" ondragstart="drag(event)" data-id="{{ t.id }}" data-desc="{{ t.description or '' }}" onclick="openModal(this, event)">
+                    
                     <div class="task-meta">
                         <span class="badge badge-cat">{{ t.category }}</span>
                         <span class="badge badge-{{ t.priority|lower }}">{{ t.priority }}</span>
+                        
                         {% if t.due_date %}
-                        <span class="badge badge-date">📅 {{ t.due_date }}</span>
+                            {% if t.is_overdue %}
+                                <span class="badge badge-overdue">⚠️ OVERDUE: {{ t.due_date }}</span>
+                            {% elif t.is_due_soon %}
+                                <span class="badge badge-due-soon">⏳ DUE SOON: {{ t.due_date }}</span>
+                            {% else %}
+                                <span class="badge badge-date">📅 {{ t.due_date }}</span>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if t.attachments|length > 0 %}
+                        <span class="badge" style="background:#10b981;">📎 {{ t.attachments|length }} Files</span>
                         {% endif %}
                     </div>
+                    
                     <div class="task-title" {% if t.status == 'Done' %}style="text-decoration: line-through; opacity: 0.5;"{% endif %}>
                         {{ t.name }}
                     </div>
@@ -137,6 +198,30 @@
                         <a href="/move/{{ t.id }}/{{ next_status }}" class="btn-action mobile-move-btn" data-next="{{ next_status }}" style="background: #6366f1; color: white;" onclick="event.stopPropagation();">{{ next_label }} ➔</a>
                         {% endif %}
                     </div>
+                    
+                    <div class="hidden-attachments-data" style="display:none;">
+                        <div class="attachment-grid">
+                            {% for att in t.attachments %}
+                                <div class="attachment-card">
+                                    <form action="/remove_attachment/{{ att.id }}" method="POST" style="margin:0; position:absolute; top:0; right:0;" onsubmit="if(confirm('Are you sure you want to delete this file permanently?')) { localStorage.setItem('reopen_modal', '{{ t.id }}'); return true; } return false;">
+                                        <button type="submit" class="delete-badge-btn" title="Delete File">✖</button>
+                                    </form>
+
+                                    {% if att.file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')) %}
+                                        <img src="{{ att.file_path }}" onclick="openLightbox('{{ att.file_path }}')" title="Click to view full screen">
+                                        <a href="{{ att.file_path }}" target="_blank" class="attachment-link">Open Image ↗</a>
+                                    {% else %}
+                                        <div style="height: 90px; display: flex; align-items: center; justify-content: center; font-size: 35px;">📄</div>
+                                        <a href="{{ att.file_path }}" target="_blank" class="attachment-link">View Doc ↗</a>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if t.attachments|length == 0 %}
+                            <p style="color:#64748b; font-size:13px; margin:0;">No file attached yet.</p>
+                        {% endif %}
+                    </div>
+                    
                 </div>
                 {% endfor %}
             </div>
@@ -146,15 +231,41 @@
 
     <div id="descModal" class="modal-overlay" onclick="closeModal()">
         <div class="modal-box" onclick="event.stopPropagation()">
-            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <span class="modal-close" onclick="closeModal()" title="Close">&times;</span>
             <h3 id="modal-task-title" style="margin: 0; font-size: 20px;">Task Details</h3>
             <p style="color: #94a3b8; font-size: 13px; margin-top: 5px;">Add extra details, notes, or useful URLs below:</p>
             <textarea id="modal-desc-text" class="modal-textarea" placeholder="Type task details here..."></textarea>
-            <div style="text-align: right; margin-top: 15px;">
+            
+            <div style="text-align: right; margin-top: 10px;">
                 <button onclick="closeModal()" style="background: transparent; color: #94a3b8; border: none; margin-right: 15px; cursor: pointer; font-weight: bold;">Cancel</button>
                 <button onclick="saveDescriptionData()" style="background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Save Details</button>
             </div>
+
+            <div class="checklist-section">
+                <h4 style="margin-top:0; margin-bottom: 10px;">📝 Sub-Tasks (Checklist)</h4>
+                <div class="checklist-input-row">
+                    <input type="text" id="new-subtask-input" class="checklist-input" placeholder="Add a new sub-task... (e.g. Write intro)">
+                    <button type="button" class="checklist-add-btn" onclick="addSubtask()">Add</button>
+                </div>
+                
+                <div id="subtasks-container"></div>
+            </div>
+
+            <div class="file-upload-section">
+                <h4 style="margin-top:0;">📎 Task Attachments</h4>
+                <div id="attachment-preview" style="margin: 15px 0; max-height: 250px; overflow-y: auto; overflow-x: hidden;"></div>
+                <form id="upload-form" action="" method="POST" enctype="multipart/form-data" onsubmit="localStorage.setItem('reopen_modal', activeCard.getAttribute('data-id'));">
+                    <input type="file" name="task_file" multiple required style="font-size: 13px; margin-top:10px;">
+                    <br>
+                    <button type="submit" class="btn-submit-file">Upload File(s)</button>
+                </form>
+            </div>
         </div>
+    </div>
+
+    <div id="imageLightbox" class="lightbox-overlay" onclick="closeLightbox()">
+        <span class="lightbox-close-btn" title="Close Full Screen">&times;</span>
+        <img id="lightbox-image" class="lightbox-img" src="" alt="Full Screen Attachment" onclick="event.stopPropagation()">
     </div>
 
     <script>
@@ -176,21 +287,116 @@
             }
         });
 
-        // 🚀 Modal JavaScript Magic Logic
         let activeCard = null;
         function openModal(card, event) {
             activeCard = card;
+            const taskId = card.getAttribute('data-id');
             const taskName = card.querySelector('.task-title').innerText;
             const currentDesc = card.getAttribute('data-desc');
             
             document.getElementById('modal-task-title').innerText = "📝 " + taskName;
             document.getElementById('modal-desc-text').value = currentDesc;
+            document.getElementById('upload-form').action = "/upload_attachment/" + taskId;
+            
+            const galleryHtml = card.querySelector('.hidden-attachments-data').innerHTML;
+            document.getElementById('attachment-preview').innerHTML = galleryHtml;
+            
+            // 🚀 NAYA: Modal khulte hi Subtasks load karo (AJAX)
+            loadSubtasks(taskId);
+            
             document.getElementById('descModal').style.display = 'flex';
         }
+        
         function closeModal() {
             document.getElementById('descModal').style.display = 'none';
             activeCard = null;
         }
+
+        // 🚀 --- AJAX FUNCTIONS FOR SUB-TASKS --- 🚀
+        function loadSubtasks(taskId) {
+            fetch(`/get_subtasks/${taskId}`)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('subtasks-container');
+                container.innerHTML = '';
+                
+                if(data.length === 0) {
+                    container.innerHTML = '<p style="color:#64748b; font-size:13px; margin:0;">No sub-tasks added yet.</p>';
+                    return;
+                }
+                
+                data.forEach(sub => {
+                    const div = document.createElement('div');
+                    div.className = 'subtask-item';
+                    const checked = sub.is_completed ? 'checked' : '';
+                    const titleClass = sub.is_completed ? 'subtask-title subtask-completed' : 'subtask-title';
+                    
+                    div.innerHTML = `
+                        <input type="checkbox" style="cursor:pointer; width:16px; height:16px;" ${checked} onchange="toggleSubtask(${sub.id})">
+                        <span class="${titleClass}">${sub.title}</span>
+                        <button class="subtask-delete" onclick="deleteSubtask(${sub.id})" title="Delete Sub-task">✖</button>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        function addSubtask() {
+            if(!activeCard) return;
+            const taskId = activeCard.getAttribute('data-id');
+            const input = document.getElementById('new-subtask-input');
+            const title = input.value.trim();
+            if(!title) return;
+
+            fetch(`/add_subtask/${taskId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    input.value = ''; // Input box khali karo
+                    loadSubtasks(taskId); // List dobara load karo
+                }
+            });
+        }
+
+        // Enter key dabane par bhi Subtask add ho
+        document.getElementById('new-subtask-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSubtask();
+            }
+        });
+
+        function toggleSubtask(subId) {
+            fetch(`/toggle_subtask/${subId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) loadSubtasks(activeCard.getAttribute('data-id'));
+            });
+        }
+
+        function deleteSubtask(subId) {
+            if(confirm('Are you sure you want to delete this sub-task?')) {
+                fetch(`/delete_subtask/${subId}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) loadSubtasks(activeCard.getAttribute('data-id'));
+                });
+            }
+        }
+        // 🚀 --- END SUB-TASKS LOGIC --- 🚀
+
+        function openLightbox(imageSrc) {
+            document.getElementById('lightbox-image').src = imageSrc;
+            document.getElementById('imageLightbox').style.display = 'flex';
+        }
+        function closeLightbox() {
+            document.getElementById('imageLightbox').style.display = 'none';
+        }
+        
         function saveDescriptionData() {
             if(!activeCard) return;
             const taskId = activeCard.getAttribute('data-id');
@@ -204,7 +410,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    activeCard.setAttribute('data-desc', descValue); // Update UI
+                    activeCard.setAttribute('data-desc', descValue);
                     closeModal();
                     alert("Details saved successfully! ✨");
                 }
@@ -219,9 +425,23 @@
                 if (Date.now() < end) requestAnimationFrame(frame);
             }());
         }
+        
         function checkAndCelebrate(status) { if (status === 'Done') localStorage.setItem('trigger_pop', 'true'); }
+        
         window.addEventListener('load', () => {
-            if (localStorage.getItem('trigger_pop') === 'true') { fireCelebration(); localStorage.removeItem('trigger_pop'); }
+            if (localStorage.getItem('trigger_pop') === 'true') { 
+                fireCelebration(); 
+                localStorage.removeItem('trigger_pop'); 
+            }
+            
+            const reopenId = localStorage.getItem('reopen_modal');
+            if (reopenId) {
+                const cardToOpen = document.querySelector(`.task-card[data-id="${reopenId}"]`);
+                if (cardToOpen) {
+                    openModal(cardToOpen, new Event('click'));
+                }
+                localStorage.removeItem('reopen_modal');
+            }
         });
 
         function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
