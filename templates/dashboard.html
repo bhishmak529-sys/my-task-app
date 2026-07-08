@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - TaskPro Elite</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Chart.js Library Link -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-container { max-width: 1000px; margin: 40px auto; padding: 20px; }
+        .chart-grid { display: flex; gap: 30px; margin-top: 30px; flex-wrap: wrap; }
+        .chart-box { background: #1e293b; padding: 25px; border-radius: 15px; flex: 1; min-width: 300px; border: 1px solid #334155; box-shadow: 0 10px 20px rgba(0,0,0,0.4); text-align: center; }
+        body.light-mode .chart-box { background: #ffffff; border-color: #e2e8f0; }
+        .chart-title { color: white; font-size: 18px; margin-bottom: 20px; font-weight: bold; }
+        body.light-mode .chart-title { color: #0f172a; }
+    </style>
+</head>
+<body class="{% if session.get('theme') == 'light' %}light-mode{% endif %}">
+    <div class="dashboard-container">
+        <div class="header-card" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>📊 Your Productivity Dashboard</h1>
+                <p>Data analytics for <b>{{ user_name }}</b></p>
+            </div>
+            <a href="/" style="background: #6366f1; color: white; padding: 8px 15px; text-decoration: none; border-radius: 8px; font-weight: bold;">⬅ Back to Board</a>
+        </div>
+
+        <div class="chart-grid">
+            <!-- Pie Chart for Task Status -->
+            <div class="chart-box">
+                <div class="chart-title">Task Progress (Status)</div>
+                <canvas id="statusChart"></canvas>
+            </div>
+
+            <!-- Bar Chart for Priorities -->
+            <div class="chart-box">
+                <div class="chart-title">Task Distribution (Priority)</div>
+                <canvas id="priorityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data from Python
+        const statusData = [{{ backlog }}, {{ todo }}, {{ in_progress }}, {{ done }}];
+        const priorityData = [{{ high }}, {{ medium }}, {{ low }}];
+
+        // 1. Pie Chart Configuration
+        const ctxStatus = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: ['Backlog', 'To Do', 'In Progress', 'Done'],
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: ['#64748b', '#f59e0b', '#3b82f6', '#10b981'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: { plugins: { legend: { labels: { color: '#94a3b8' } } } }
+        });
+
+        // 2. Bar Chart Configuration
+        const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+        new Chart(ctxPriority, {
+            type: 'bar',
+            data: {
+                labels: ['High', 'Medium', 'Low'],
+                datasets: [{
+                    label: 'Number of Tasks',
+                    data: priorityData,
+                    backgroundColor: ['#ef4444', '#eab308', '#0ea5e9'],
+                    borderRadius: 8
+                }]
+            },
+            options: { 
+                scales: { 
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8' } },
+                    x: { ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+</body>
+</html>
