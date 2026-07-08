@@ -29,7 +29,6 @@
         body.light-mode .modal-textarea { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         
-        /* 🚀 NAYA CSS: Subtasks Checklists ke liye */
         .checklist-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #334155; }
         body.light-mode .checklist-section { border-top-color: #cbd5e1; }
         .checklist-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -101,8 +100,11 @@
                     <p>Welcome back, <b>{{ user_name }}</b>!</p>
                 </div>
             </div>
+            
+            <!-- 👇 YAHAN HAI TUMHARA EXPORT AUR DASHBOARD BUTTON 👇 -->
             <div class="top-links">
                 <a href="/export" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold;">📥 Export Board</a>
+                <a href="/dashboard" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold;">📊 Dashboard</a>
                 <a href="#" id="theme-toggle">☀️ Light Mode</a>
                 <a href="/about">ℹ️ About</a>
                 <a href="/logout">🚪 Logout</a>
@@ -229,6 +231,7 @@
         </div>
     </div>
 
+    <!-- Modal Pop-up Structure -->
     <div id="descModal" class="modal-overlay" onclick="closeModal()">
         <div class="modal-box" onclick="event.stopPropagation()">
             <span class="modal-close" onclick="closeModal()" title="Close">&times;</span>
@@ -241,13 +244,13 @@
                 <button onclick="saveDescriptionData()" style="background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Save Details</button>
             </div>
 
+            <!-- Checklist Section -->
             <div class="checklist-section">
                 <h4 style="margin-top:0; margin-bottom: 10px;">📝 Sub-Tasks (Checklist)</h4>
                 <div class="checklist-input-row">
                     <input type="text" id="new-subtask-input" class="checklist-input" placeholder="Add a new sub-task... (e.g. Write intro)">
                     <button type="button" class="checklist-add-btn" onclick="addSubtask()">Add</button>
                 </div>
-                
                 <div id="subtasks-container"></div>
             </div>
 
@@ -268,6 +271,7 @@
         <img id="lightbox-image" class="lightbox-img" src="" alt="Full Screen Attachment" onclick="event.stopPropagation()">
     </div>
 
+    <!-- Scripts -->
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
@@ -301,9 +305,7 @@
             const galleryHtml = card.querySelector('.hidden-attachments-data').innerHTML;
             document.getElementById('attachment-preview').innerHTML = galleryHtml;
             
-            // 🚀 NAYA: Modal khulte hi Subtasks load karo (AJAX)
             loadSubtasks(taskId);
-            
             document.getElementById('descModal').style.display = 'flex';
         }
         
@@ -312,7 +314,7 @@
             activeCard = null;
         }
 
-        // 🚀 --- AJAX FUNCTIONS FOR SUB-TASKS --- 🚀
+        // AJAX FUNCTIONS FOR SUB-TASKS
         function loadSubtasks(taskId) {
             fetch(`/get_subtasks/${taskId}`)
             .then(res => res.json())
@@ -356,13 +358,12 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    input.value = ''; // Input box khali karo
-                    loadSubtasks(taskId); // List dobara load karo
+                    input.value = '';
+                    loadSubtasks(taskId);
                 }
             });
         }
 
-        // Enter key dabane par bhi Subtask add ho
         document.getElementById('new-subtask-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -387,7 +388,6 @@
                 });
             }
         }
-        // 🚀 --- END SUB-TASKS LOGIC --- 🚀
 
         function openLightbox(imageSrc) {
             document.getElementById('lightbox-image').src = imageSrc;
