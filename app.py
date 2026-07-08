@@ -411,7 +411,26 @@ def update_status():
         db.session.commit()
         return jsonify({"success": True})
     return jsonify({"success": False})
-
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+    
+    # Task Status Counting
+    backlog = len([t for t in tasks if t.status == 'Backlog'])
+    todo = len([t for t in tasks if t.status == 'To Do'])
+    in_progress = len([t for t in tasks if t.status == 'In Progress'])
+    done = len([t for t in tasks if t.status == 'Done'])
+    
+    # Task Priority Counting
+    high = len([t for t in tasks if t.priority == 'High'])
+    medium = len([t for t in tasks if t.priority == 'Medium'])
+    low = len([t for t in tasks if t.priority == 'Low'])
+    
+    return render_template("dashboard.html", 
+                           user_name=current_user.username,
+                           backlog=backlog, todo=todo, in_progress=in_progress, done=done,
+                           high=high, medium=medium, low=low)
 @app.route("/about")
 def about():
     return render_template("about.html")
