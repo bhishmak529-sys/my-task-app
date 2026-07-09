@@ -17,7 +17,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'bhishmak_ka_secret_123'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trello_board_final.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 🚀 EMAIL SETTINGS (Tumhara Email aur Password)
