@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskPro Elite - Board</title>
     <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- 🎊 Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -19,6 +21,10 @@
         .text-progress-title { color: white; font-weight: bold; font-size: 16px; }
         body.light-mode .text-progress-title { color: #0f172a; }
 
+        /* 📅 CALENDAR STYLING */
+        .date-picker { padding: 14px 15px; border: 1px solid #334155; border-radius: 12px; background: #0f172a; color: white; outline: none; font-family: inherit; font-size: 14px; cursor: pointer; }
+        body.light-mode .date-picker { background: #ffffff; color: #0f172a; border-color: #e2e8f0; }
+        
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: #1e293b; color: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; animation: fadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
         body.light-mode .modal-box { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
@@ -46,7 +52,7 @@
         .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #334155; }
         body.light-mode .file-upload-section { border-top-color: #cbd5e1; }
         .btn-submit-file { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin-top: 5px; }
-        
+
         .lightbox-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; }
         .lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); animation: zoomIn 0.3s ease; }
         .lightbox-close-btn { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.2s; }
@@ -70,6 +76,11 @@
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .badge-overdue { background: #ef4444 !important; color: white !important; animation: pulse-red 1.5s infinite; font-weight: bold; }
         .badge-due-soon { background: #f59e0b !important; color: white !important; font-weight: bold; }
+
+        .log-item { padding: 12px 10px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+        body.light-mode .log-item { border-bottom-color: #cbd5e1; color: #0f172a; }
+        .log-time { font-size: 11px; color: #94a3b8; font-weight: bold; }
+        body.light-mode .log-time { color: #64748b; }
     </style>
 </head>
 <body>
@@ -101,9 +112,9 @@
                 </div>
             </div>
             
-            <!-- 👇 YAHAN HAI TUMHARA EXPORT AUR DASHBOARD BUTTON 👇 -->
             <div class="top-links">
-                <a href="/export" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold;">📥 Export Board</a>
+                <button onclick="document.getElementById('activityModal').style.display='flex'" style="background: #8b5cf6; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;">📜 Activity Log</button>
+                <a href="/export" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold;">📥 Export</a>
                 <a href="/dashboard" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold;">📊 Dashboard</a>
                 <a href="#" id="theme-toggle">☀️ Light Mode</a>
                 <a href="/about">ℹ️ About</a>
@@ -123,8 +134,13 @@
             </div>
         </div>
 
+        <!-- 📅 DATE PICKER ADDED IN THIS FORM 👇 -->
         <form action="/add" method="POST" class="add-task-form">
             <input type="text" name="task_name" placeholder="What needs to be done?" required>
+            
+            <!-- THE NEW HTML5 CALENDAR BOX -->
+            <input type="date" name="due_date" class="date-picker" required title="Select Due Date">
+            
             <select name="category">
                 <option value="Personal">🏠 Personal</option>
                 <option value="Work">💻 Work</option>
@@ -184,6 +200,10 @@
                         {% if t.attachments|length > 0 %}
                         <span class="badge" style="background:#10b981;">📎 {{ t.attachments|length }} Files</span>
                         {% endif %}
+                        
+                        {% if current_user.username != t.owner.username %}
+                        <span class="badge" style="background:#8b5cf6;">🤝 Shared by {{ t.owner.username.split('@')[0] }}</span>
+                        {% endif %}
                     </div>
                     
                     <div class="task-title" {% if t.status == 'Done' %}style="text-decoration: line-through; opacity: 0.5;"{% endif %}>
@@ -231,7 +251,28 @@
         </div>
     </div>
 
-    <!-- Modal Pop-up Structure -->
+    <!-- 📜 ACTIVITY LOG MODAL -->
+    <div id="activityModal" class="modal-overlay" onclick="this.style.display='none'">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="document.getElementById('activityModal').style.display='none'" title="Close">&times;</span>
+            <h3 style="margin: 0 0 15px 0;">📜 Recent Activity Log</h3>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: -10px;">Track everything you do on your board.</p>
+            <div style="max-height: 350px; overflow-y: auto; padding-right: 10px;">
+                {% if logs %}
+                    {% for log in logs %}
+                    <div class="log-item">
+                        <span style="font-size: 14px;">{{ log.description }}</span>
+                        <span class="log-time">{{ log.timestamp.strftime('%d %b, %I:%M %p') }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #64748b; font-size: 14px; text-align: center; margin-top: 20px;">No activity found yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 📝 TASK DETAILS MODAL -->
     <div id="descModal" class="modal-overlay" onclick="closeModal()">
         <div class="modal-box" onclick="event.stopPropagation()">
             <span class="modal-close" onclick="closeModal()" title="Close">&times;</span>
@@ -254,6 +295,18 @@
                 <div id="subtasks-container"></div>
             </div>
 
+            <!-- 🤝 Team Workspace (Share Task) Section -->
+            <div class="share-section" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #334155;">
+                <h4 style="margin-top:0; margin-bottom: 10px;">🤝 Share with Team</h4>
+                <div class="checklist-input-row">
+                    <input type="text" id="share-username-input" class="checklist-input" placeholder="Enter friend's email (username)...">
+                    <button type="button" class="checklist-add-btn" style="background: #10b981;" onclick="shareTask()">Share</button>
+                </div>
+                <p id="share-msg" style="font-size: 13px; margin-top: 5px; display: none; font-weight: bold;"></p>
+                <div id="collaborators-container" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+
+            <!-- Attachments Section -->
             <div class="file-upload-section">
                 <h4 style="margin-top:0;">📎 Task Attachments</h4>
                 <div id="attachment-preview" style="margin: 15px 0; max-height: 250px; overflow-y: auto; overflow-x: hidden;"></div>
@@ -266,12 +319,13 @@
         </div>
     </div>
 
+    <!-- 🖼️ LIGHTBOX -->
     <div id="imageLightbox" class="lightbox-overlay" onclick="closeLightbox()">
         <span class="lightbox-close-btn" title="Close Full Screen">&times;</span>
         <img id="lightbox-image" class="lightbox-img" src="" alt="Full Screen Attachment" onclick="event.stopPropagation()">
     </div>
 
-    <!-- Scripts -->
+    <!-- ================= SCRIPTS ================= -->
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
@@ -306,6 +360,8 @@
             document.getElementById('attachment-preview').innerHTML = galleryHtml;
             
             loadSubtasks(taskId);
+            loadCollaborators(taskId);
+            
             document.getElementById('descModal').style.display = 'flex';
         }
         
@@ -314,25 +370,21 @@
             activeCard = null;
         }
 
-        // AJAX FUNCTIONS FOR SUB-TASKS
         function loadSubtasks(taskId) {
             fetch(`/get_subtasks/${taskId}`)
             .then(res => res.json())
             .then(data => {
                 const container = document.getElementById('subtasks-container');
                 container.innerHTML = '';
-                
                 if(data.length === 0) {
                     container.innerHTML = '<p style="color:#64748b; font-size:13px; margin:0;">No sub-tasks added yet.</p>';
                     return;
                 }
-                
                 data.forEach(sub => {
                     const div = document.createElement('div');
                     div.className = 'subtask-item';
                     const checked = sub.is_completed ? 'checked' : '';
                     const titleClass = sub.is_completed ? 'subtask-title subtask-completed' : 'subtask-title';
-                    
                     div.innerHTML = `
                         <input type="checkbox" style="cursor:pointer; width:16px; height:16px;" ${checked} onchange="toggleSubtask(${sub.id})">
                         <span class="${titleClass}">${sub.title}</span>
@@ -349,42 +401,83 @@
             const input = document.getElementById('new-subtask-input');
             const title = input.value.trim();
             if(!title) return;
-
             fetch(`/add_subtask/${taskId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: title })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    input.value = '';
-                    loadSubtasks(taskId);
-                }
+            }).then(res => res.json()).then(data => {
+                if(data.success) { input.value = ''; loadSubtasks(taskId); }
             });
         }
 
         document.getElementById('new-subtask-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addSubtask();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); addSubtask(); }
         });
 
         function toggleSubtask(subId) {
             fetch(`/toggle_subtask/${subId}`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) loadSubtasks(activeCard.getAttribute('data-id'));
-            });
+            .then(res => res.json()).then(data => { if(data.success) loadSubtasks(activeCard.getAttribute('data-id')); });
         }
 
         function deleteSubtask(subId) {
             if(confirm('Are you sure you want to delete this sub-task?')) {
                 fetch(`/delete_subtask/${subId}`, { method: 'POST' })
+                .then(res => res.json()).then(data => { if(data.success) loadSubtasks(activeCard.getAttribute('data-id')); });
+            }
+        }
+
+        function shareTask() {
+            if(!activeCard) return;
+            const taskId = activeCard.getAttribute('data-id');
+            const input = document.getElementById('share-username-input');
+            const username = input.value.trim();
+            const msgBox = document.getElementById('share-msg');
+
+            if(!username) { alert("Please enter a username to share with!"); return; }
+
+            fetch('/share_task', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_id: taskId, friend_username: username })
+            })
+            .then(res => res.json())
+            .then(data => {
+                msgBox.style.display = 'block';
+                msgBox.innerText = data.message;
+                if(data.success) {
+                    msgBox.style.color = '#10b981';
+                    input.value = '';
+                    loadCollaborators(taskId); 
+                } else { msgBox.style.color = '#ef4444'; }
+                setTimeout(() => { msgBox.style.display = 'none'; }, 3000);
+            });
+        }
+
+        function loadCollaborators(taskId) {
+            fetch(`/get_collaborators/${taskId}`)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('collaborators-container');
+                container.innerHTML = '';
+                if(data.length > 0) {
+                    data.forEach(user => {
+                        container.innerHTML += `
+                            <span class="badge" style="background: #3b82f6; padding: 8px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px;">
+                                👤 ${user.username.split('@')[0]} 
+                                <button type="button" style="background:transparent; border:none; color:#ffb3b3; cursor:pointer; font-weight:bold; font-size:14px; padding:0;" onclick="removeCollaborator(${taskId}, ${user.id})" title="Remove Access">✖</button>
+                            </span>`;
+                    });
+                } else {
+                    container.innerHTML = '<span style="color:#64748b; font-size:12px;">Not shared with anyone yet.</span>';
+                }
+            });
+        }
+
+        function removeCollaborator(taskId, userId) {
+            if(confirm('Are you sure you want to remove this user from the task?')) {
+                fetch(`/remove_collaborator/${taskId}/${userId}`, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
-                    if(data.success) loadSubtasks(activeCard.getAttribute('data-id'));
+                    if(data.success) { loadCollaborators(taskId); 
+                    } else { alert("Could not remove user. Only task owners can remove collaborators."); }
                 });
             }
         }
@@ -393,9 +486,7 @@
             document.getElementById('lightbox-image').src = imageSrc;
             document.getElementById('imageLightbox').style.display = 'flex';
         }
-        function closeLightbox() {
-            document.getElementById('imageLightbox').style.display = 'none';
-        }
+        function closeLightbox() { document.getElementById('imageLightbox').style.display = 'none'; }
         
         function saveDescriptionData() {
             if(!activeCard) return;
@@ -403,16 +494,13 @@
             const descValue = document.getElementById('modal-desc-text').value;
 
             fetch('/save_description', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_id: taskId, description: descValue })
-            })
-            .then(res => res.json())
-            .then(data => {
+            }).then(res => res.json()).then(data => {
                 if(data.success) {
                     activeCard.setAttribute('data-desc', descValue);
                     closeModal();
-                    alert("Details saved successfully! ✨");
+                    alert("Details saved successfully! ✨"); 
                 }
             });
         }
@@ -433,13 +521,10 @@
                 fireCelebration(); 
                 localStorage.removeItem('trigger_pop'); 
             }
-            
             const reopenId = localStorage.getItem('reopen_modal');
             if (reopenId) {
                 const cardToOpen = document.querySelector(`.task-card[data-id="${reopenId}"]`);
-                if (cardToOpen) {
-                    openModal(cardToOpen, new Event('click'));
-                }
+                if (cardToOpen) openModal(cardToOpen, new Event('click'));
                 localStorage.removeItem('reopen_modal');
             }
         });
@@ -455,7 +540,9 @@
             ev.currentTarget.classList.remove('drag-over');
             let taskId = ev.dataTransfer.getData("taskId");
             let newStatus = ev.currentTarget.getAttribute('data-status');
+            
             checkAndCelebrate(newStatus);
+            
             fetch('/update_status', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_id: taskId, new_status: newStatus })
