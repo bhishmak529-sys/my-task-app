@@ -5,6 +5,8 @@ A full-stack, enterprise-level Task Management Web Application built with Python
 🌍 **Live Demo:** [Click Here to View App](https://my-task-app-hens.onrender.com)
 
 ## ✨ Key Features
+* **📊 Interactive Analytics Dashboard:** Real-time data visualization (Pie, Bar, and Doughnut charts) using Chart.js.
+* **📅 Smart Task Scheduler:** Interactive date picker with automatic 'Overdue' (Red) and 'Due Soon' (Yellow) color-coded badges.
 * **🔒 Google OAuth Integration:** Secure login system using Google accounts.
 * **📊 Productivity Dashboard:** Interactive charts (Doughnut & Bar) using `Chart.js` to track task status and priorities.
 * **📋 Kanban Board:** Drag & drop tasks between "Backlog", "To Do", "In Progress", and "Done".
