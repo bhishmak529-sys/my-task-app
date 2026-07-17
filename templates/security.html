@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security - TaskPro Elite</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 100%; max-width: 450px; text-align: center; position: relative; }
+        h2 { margin-bottom: 25px; font-size: 28px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 15px; margin-bottom: 20px; text-align: left; position: relative; transition: 0.3s; }
+        label { font-size: 11px; color: #94a3b8; font-weight: bold; display: block; }
+        input { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; margin-top: 5px; }
+        .btn-submit { background: #ef4444; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-submit:hover { background: #dc2626; }
+        .pwd-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
+        .pwd-toggle:hover { opacity: 1; }
+        .back-btn { position: absolute; top: 30px; left: 30px; color: #94a3b8; text-decoration: none; font-size: 16px; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 5px; background: #0f172a; padding: 8px 15px; border-radius: 8px; border: 1px solid #334155; }
+        .back-btn:hover { color: white; background: #334155; }
+        .inline-error { color: #ef4444; font-size: 12px; margin-top: -15px; margin-bottom: 15px; text-align: left; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- Back to Dashboard/Board Button -->
+    <a href="/" class="back-btn">← Back to Board</a>
+
+    <div class="login-card">
+        <h2 style="margin-top: 0;">🔒 Security Settings</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 30px;">Update your password to keep your account secure.</p>
+        
+        <form action="/change_password" method="POST" onsubmit="return validatePasswords(event)">
+            
+            <!-- Box 1: Current Password -->
+            <div class="input-box" style="border-color: {% if old_err %}#ef4444{% else %}#334155{% endif %};">
+                <label>Current Password</label>
+                <input type="password" id="old_pw" name="old_password" placeholder="Enter current password" required>
+                <span class="pwd-toggle" onclick="toggleVis('old_pw', this)">👁️</span>
+            </div>
+            {% if old_err %}
+                <p class="inline-error">❌ {{ old_err }}</p>
+            {% endif %}
+
+            <!-- Box 2: New Password -->
+            <div class="input-box" style="border-color: {% if new_err %}#ef4444{% else %}#334155{% endif %};">
+                <label>New Password</label>
+                <input type="password" id="new_pw" name="new_password" placeholder="Create new password" required oninput="checkMatch()">
+                <span class="pwd-toggle" onclick="toggleVis('new_pw', this)">👁️</span>
+            </div>
+
+            <!-- Box 3: Confirm New Password -->
+            <div class="input-box" style="border-color: {% if new_err %}#ef4444{% else %}#334155{% endif %};">
+                <label>Confirm New Password</label>
+                <input type="password" id="conf_pw" name="confirm_password" placeholder="Repeat new password" required oninput="checkMatch()">
+                <span class="pwd-toggle" onclick="toggleVis('conf_pw', this)">👁️</span>
+            </div>
+            
+            <!-- LIVE JS MATCH ERROR -->
+            <p id="js_match_err" class="inline-error" style="display: {% if new_err %}block{% else %}none{% endif %};">
+                ❌ {% if new_err %}{{ new_err }}{% else %}Passwords do not match!{% endif %}
+            </p>
+
+            <button type="submit" class="btn-submit">Update Password</button>
+        </form>
+    </div>
+
+    <script>
+        // 👁️ Show/Hide Password Logic
+        function toggleVis(fieldId, eyeBtn) {
+            const field = document.getElementById(fieldId);
+            if (field.type === "password") { field.type = "text"; eyeBtn.innerText = "🙈"; } 
+            else { field.type = "password"; eyeBtn.innerText = "👁️"; }
+        }
+
+        // Live typing check for Password Matching
+        function checkMatch() {
+            const p1 = document.getElementById('new_pw').value;
+            const p2 = document.getElementById('conf_pw').value;
+            const err = document.getElementById('js_match_err');
+            if (p2.length > 0 && p1 !== p2) {
+                err.style.display = 'block';
+                err.innerText = "❌ Passwords do not match!";
+            } else {
+                err.style.display = 'none';
+            }
+        }
+
+        // Prevent form submission if passwords are wrong
+        function validatePasswords(e) {
+            const p1 = document.getElementById('new_pw').value;
+            const p2 = document.getElementById('conf_pw').value;
+            if (p1 !== p2) {
+                e.preventDefault();
+                document.getElementById('js_match_err').style.display = 'block';
+                document.getElementById('js_match_err').innerText = "❌ Passwords do not match!";
+            }
+        }
+    </script>
+</body>
+</html>
