@@ -1,105 +1,79 @@
-{% extends "base.html" %}
-{% block body %}
-
-<style>
-    /* Accordion Custom Styling for Dark Theme */
-    .accordion-button::after { filter: invert(1); }
-    .accordion-button:not(.collapsed) { background-color: #312e81 !important; color: white !important; box-shadow: none; }
-    .accordion-button:focus { box-shadow: none; border-color: #6366f1; }
-</style>
-
-<div class="row justify-content-center mt-4">
-    <div class="col-md-8">
-        
-        <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-white fw-bold mb-0">ℹ️ About TaskPro Elite</h2>
-            <a href="/" class="btn fw-bold" style="background: #6366f1; color: white; border: none; padding: 8px 15px; border-radius: 8px;">⬅ Back to Board</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TaskPro Elite</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { padding: 20px; color: white; background: #0f172a; }
+        body.light-mode { background: #f1f5f9; color: #0f172a; }
+        .dash-container { max-width: 1000px; margin: auto; }
+        .chart-box { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; }
+        body.light-mode .chart-box { background: white; border-color: #cbd5e1; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    </style>
+</head>
+<body>
+    <script>if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');</script>
+    <div class="dash-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>📊 {{ user_name }}'s Dashboard</h2>
+            <a href="/" style="background: #6366f1; color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; font-weight: bold;">← Back to Board</a>
         </div>
 
-        <!-- Welcome Message Card -->
-        <div class="card shadow p-4 border-0 mb-4" style="background: #1e293b; color: white; border-radius: 12px; border-left: 5px solid #10b981 !important;">
-            <h4 class="fw-bold" style="color: #10b981;">Welcome to your Ultimate Productivity Tool! 🚀</h4>
-            <p style="color: #cbd5e1; font-size: 15px; margin-bottom: 0; margin-top: 10px;">
-                TaskPro Elite is an enterprise-grade task management system. This application helps you track your daily tasks, college assignments, and urgent projects. Read the guide below to learn how to utilize the app to its fullest!
-            </p>
+        <div class="chart-box" style="text-align: center;">
+            <h3>Total Tasks: {{ total_tasks }}</h3>
         </div>
 
-        <!-- How to Use Section (Interactive Accordion) -->
-        <h4 class="text-white mb-3 fw-bold mt-5">📖 How to Use (User Guide)</h4>
-        
-        <div class="accordion shadow-sm" id="helpAccordion" style="border-radius: 12px; overflow: hidden;">
-            
-            <!-- Guide Item 1 -->
-            <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="background: #1e293b; color: white; font-size: 16px;">
-                        🖱️ 1. Kanban Board & Drag-Drop
-                    </button>
-                </h2>
-                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        When you add a new task from the top form, it automatically goes into the <b>Backlog</b>.<br><br>
-                        👉 <b>Trick:</b> Click and hold any task card to drag and drop it into the <b>To Do</b> or <b>In Progress</b> column. Once completed, drop it into <b>Done</b> and enjoy the celebration 🎉!
-                    </div>
-                </div>
+        <div class="grid-2">
+            <div class="chart-box">
+                <h3 style="text-align: center; margin-top:0;">Task Status</h3>
+                <canvas id="statusChart"></canvas>
             </div>
-
-            <!-- Guide Item 2 -->
-            <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="background: #1e293b; color: white; font-size: 16px;">
-                        📝 2. Sub-tasks & Attachments (Extra Details)
-                    </button>
-                </h2>
-                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        <b>Click</b> on any task card! A detailed pop-up will open where you can:<br>
-                        ✅ Write a detailed <b>Description</b> for the task.<br>
-                        ✅ Create a <b>Checklist (Sub-tasks)</b> for smaller steps.<br>
-                        ✅ Upload necessary <b>Images or PDF files</b>, which you can view in full-screen later.
-                    </div>
-                </div>
+            <div class="chart-box">
+                <h3 style="text-align: center; margin-top:0;">Task Priority</h3>
+                <canvas id="priorityChart"></canvas>
             </div>
-
-            <!-- Guide Item 3 -->
-            <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" style="background: #1e293b; color: white; font-size: 16px;">
-                        📜 3. Activity Log (History Tracking)
-                    </button>
-                </h2>
-                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        Forgot when you moved your last task?<br>
-                        Click the purple <b>📜 Activity Log</b> button in the top navigation bar. The app silently saves every action with a date and time stamp, allowing you to view your complete audit trail.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Guide Item 4 -->
-            <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" style="background: #1e293b; color: white; font-size: 16px;">
-                        📊 4. Productivity Dashboard & Emails
-                    </button>
-                </h2>
-                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        👉 <b>Dashboard:</b> Click the 📊 Dashboard button at the top to view visual graphs tracking your productivity.<br>
-                        👉 <b>Smart Emails:</b> If you add a task under the "High Priority" or "Urgent" category, our background bot will instantly send you an email alert!
-                    </div>
-                </div>
-            </div>
-
         </div>
-
-        <!-- Developer Signature -->
-        <div class="text-center mt-5 mb-4" style="color: #64748b; font-size: 14px;">
-            <p>Designed & Developed with ❤️ by <b>Bhishmak</b> <br> A Masterpiece of BCA 2nd Semester</p>
-        </div>
-
     </div>
-</div>
 
-{% endblock %}
+    <script>
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Backlog', 'To Do', 'In Progress', 'Done'],
+                datasets: [{
+                    data: [{{ status_data.backlog }}, {{ status_data.todo }}, {{ status_data.in_progress }}, {{ status_data.done }}],
+                    backgroundColor: ['#64748b', '#3b82f6', '#f59e0b', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: { plugins: { legend: { labels: { color: localStorage.getItem('theme') === 'light' ? '#0f172a' : 'white' } } } }
+        });
+
+        const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['High', 'Medium', 'Low'],
+                datasets: [{
+                    label: 'Tasks by Priority',
+                    data: [{{ priority_data.high }}, {{ priority_data.medium }}, {{ priority_data.low }}],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
+                    borderRadius: 6
+                }]
+            },
+            options: { 
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { ticks: { color: localStorage.getItem('theme') === 'light' ? '#0f172a' : 'white', stepSize: 1 } },
+                    x: { ticks: { color: localStorage.getItem('theme') === 'light' ? '#0f172a' : 'white' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
