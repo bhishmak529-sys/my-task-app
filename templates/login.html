@@ -1,20 +1,84 @@
-{% extends "base.html" %}
-{% block body %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4 card shadow-lg p-4 border-0" style="background: #ffffff; color: #0f172a; border-radius: 12px;">
-        <h2 class="text-center mb-4 fw-bold">Login 🔑</h2>
-        <form method="POST">
-            <input type="text" name="username" class="form-control mb-3" placeholder="Username" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;" required>
-            <input type="password" name="password" class="form-control mb-3" placeholder="Password" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;" required>
-            <button type="submit" class="btn btn-primary w-100 fw-bold" style="background: #6366f1; border: none; padding: 10px;">Login</button>
-        </form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro Elite - Login</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 100%; max-width: 400px; text-align: center; }
+        h2 { margin-bottom: 25px; font-size: 28px; font-weight: bold; color: #6366f1; }
+        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 15px; margin-bottom: 20px; text-align: left; position: relative; }
+        label { font-size: 11px; color: #94a3b8; font-weight: bold; display: block; }
+        input { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; margin-top: 5px; }
+        .btn-submit { background: #6366f1; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-submit:hover { background: #4f46e5; }
+        .pwd-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
+        .pwd-toggle:hover { opacity: 1; }
+        .link-text { margin-top: 20px; font-size: 14px; color: #94a3b8; display: block; text-decoration: none; }
+        .link-text span { color: #6366f1; font-weight: bold; }
+        .btn-google { background: white; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; padding: 12px; margin-top: 15px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        <div style="text-align: center; margin: 15px 0; color: #64748b; font-size: 12px; font-weight: bold;">OR</div>
-        <a href="/login/google" class="btn w-100" style="background: white; color: #333; border: 2px solid #e2e8f0; font-weight: bold; text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; border-radius: 8px;">
-            <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google Logo"> Continue with Google
+        /* Premium Toast Notification CSS */
+        .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .flash-alert { min-width: 250px; padding: 15px 20px; border-radius: 8px; background: #1e293b; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 5px solid #6366f1; animation: slideIn 0.4s ease forwards; font-weight: bold; }
+        .alert-success { border-left-color: #10b981; }
+        .alert-error { border-left-color: #ef4444; }
+        .alert-info { border-left-color: #3b82f6; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container" id="fc">
+        {% for category, message in messages %}
+          <div class="flash-alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+        <script> setTimeout(() => { document.getElementById('fc').style.display='none'; }, 3500); </script>
+      {% endif %}
+    {% endwith %}
+
+    <div class="login-card">
+        <h2>Login to TaskPro Elite 🚀</h2>
+        
+        <form action="/login" method="POST">
+            <div class="input-box">
+                <label>Username</label>
+                <!-- FIX: Changed type to text so any username works -->
+                <input type="text" name="username" placeholder="Enter username or email" required>
+            </div>
+            
+            <div class="input-box">
+                <label>Password</label>
+                <input type="password" id="login_password" name="password" placeholder="••••••••" required>
+                <span class="pwd-toggle" onclick="toggleLoginPassword()">👁️</span>
+            </div>
+            
+            <button type="submit" class="btn-submit">Sign In</button>
+        </form>
+
+        <a href="/login/google" class="btn-google">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 18px;">
+            Continue with Google
         </a>
 
-        <p class="mt-4 text-center small" style="color: #64748b;">New? <a href="/register" style="color: #6366f1; text-decoration: none; font-weight: bold;">Register Here</a></p>
+        <a href="/register" class="link-text">Don't have an account? <span>Register ➔</span></a>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        function toggleLoginPassword() {
+            const pwdField = document.getElementById('login_password');
+            const eyeIcon = event.target;
+            if (pwdField.type === "password") {
+                pwdField.type = "text";
+                eyeIcon.innerText = "🙈";
+            } else {
+                pwdField.type = "password";
+                eyeIcon.innerText = "👁️";
+            }
+        }
+    </script>
+</body>
+</html>
