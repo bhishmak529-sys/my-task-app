@@ -19,14 +19,10 @@ from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
 
-# 🛡️ SECURITY
+# 🛡️ SECURITY & CONFIG
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# 🚀 EMAIL SETTINGS
-SENDER_EMAIL = 'aparnathakur157@gmail.com'
-APP_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -58,6 +54,8 @@ def load_user(user_id):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
+    display_name = db.Column(db.String(100), nullable=True)
+    profile_pic = db.Column(db.String(300), nullable=True)
     password = db.Column(db.String(150), nullable=False)
     tasks = db.relationship('Task', backref='owner', lazy=True)
 
@@ -83,6 +81,14 @@ class ActivityLog(db.Model):
     timestamp = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='task_comments')
+
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -93,6 +99,7 @@ class Task(db.Model):
     description = db.Column(db.Text, default='', nullable=True) 
     attachments = db.relationship('Attachment', backref='task', cascade='all, delete-orphan', lazy=True)
     subtasks = db.relationship('SubTask', backref='task', cascade='all, delete-orphan', lazy=True)
+    comments = db.relationship('Comment', backref='task', cascade='all, delete-orphan', lazy=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date_created = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     collaborators = db.relationship('User', secondary=task_collaborators, backref=db.backref('shared_tasks', lazy='dynamic'))
@@ -135,7 +142,9 @@ def google_authorize():
         db.session.add(user)
         db.session.commit()
     login_user(user)
-    session['profile_pic'] = picture
+    if not current_user.profile_pic:
+        session['profile_pic'] = picture
+    flash("Logged in successfully via Google! 🚀", "success")
     return redirect(url_for('home'))
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -145,7 +154,10 @@ def register():
         if not User.query.filter_by(username=un).first():
             db.session.add(User(username=un, password=generate_password_hash(pw, method='pbkdf2:sha256')))
             db.session.commit()
+            flash("Account created successfully! Please login.", "success")
             return redirect(url_for('login'))
+        else:
+            flash("Username already exists! ❌", "error")
     return render_template("register.html")
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -154,22 +166,97 @@ def login():
         user = User.query.filter_by(username=request.form.get('username')).first()
         if user and check_password_hash(user.password, request.form.get('password')):
             login_user(user)
-            session['profile_pic'] = f"https://ui-avatars.com/api/?name={user.username}&background=6366f1&color=fff"
+            if not current_user.profile_pic:
+                session['profile_pic'] = f"https://ui-avatars.com/api/?name={user.username}&background=6366f1&color=fff"
+            flash("Logged in successfully! 🚀", "success")
             return redirect(url_for('home'))
+        else:
+            flash("Invalid username or password! ❌", "error")
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
     logout_user()
     session.pop('profile_pic', None)
+    flash("You have been logged out securely. 👋", "info")
     return redirect(url_for('login'))
 
-# ================= MAIN ROUTES =================
+# ================= PROFILE & SECURITY ROUTE =================
+@app.route("/update_profile", methods=["POST"])
+@login_required
+def update_profile():
+    new_name = request.form.get("display_name")
+    if new_name:
+        current_user.display_name = new_name 
+        db.session.add(ActivityLog(description="Updated Display Name", user_id=current_user.id))
+
+    file = request.files.get("profile_pic")
+    if file and file.filename != '':
+        filename = secure_filename(file.filename)
+        unique_filename = f"dp_{current_user.id}_{secrets.token_hex(4)}_{filename}"
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path) 
+        current_user.profile_pic = f"/static/uploads/{unique_filename}" 
+        session['profile_pic'] = current_user.profile_pic
+        db.session.add(ActivityLog(description="Updated Profile Picture", user_id=current_user.id))
+
+    db.session.commit()
+    flash("Profile Settings Updated Successfully! 🌟", "success")
+    return redirect(url_for('home'))
+
+@app.route("/change_password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    if request.method == "GET":
+        return render_template("security.html")
+
+    old_pw = request.form.get("old_password")
+    new_pw = request.form.get("new_password")
+    confirm_pw = request.form.get("confirm_password")
+    
+    old_err = None
+    new_err = None
+    
+    if not check_password_hash(current_user.password, old_pw):
+        old_err = "Incorrect current password!"
+        
+    if new_pw != confirm_pw:
+        new_err = "New passwords do not match!"
+    elif len(new_pw) < 4:
+        new_err = "Password must be at least 4 characters long!"
+        
+    if old_err or new_err:
+        return render_template("security.html", old_err=old_err, new_err=new_err)
+
+    current_user.password = generate_password_hash(new_pw, method='pbkdf2:sha256')
+    db.session.add(ActivityLog(description="Changed Account Password", user_id=current_user.id))
+    db.session.commit()
+    flash("Security Alert: Password changed successfully! 🔒", "success")
+    return redirect(url_for('home'))
+
+# ================= MAIN ROUTES (WITH FILTERS) =================
 @app.route("/")
 @login_required
 def home():
-    my_tasks = Task.query.filter_by(user_id=current_user.id).all()
+    cat_filter = request.args.get('category', 'All')
+    pri_filter = request.args.get('priority', 'All')
+
+    my_query = Task.query.filter_by(user_id=current_user.id)
+    if cat_filter != 'All':
+        my_query = my_query.filter_by(category=cat_filter)
+    if pri_filter != 'All':
+        my_query = my_query.filter_by(priority=pri_filter)
+        
+    my_tasks = my_query.all()
+
     shared_tasks = current_user.shared_tasks.all()
+    if cat_filter != 'All':
+        shared_tasks = [t for t in shared_tasks if t.category == cat_filter]
+    if pri_filter != 'All':
+        shared_tasks = [t for t in shared_tasks if t.priority == pri_filter]
+
     tasks = list(set(my_tasks + shared_tasks))
     logs = ActivityLog.query.filter_by(user_id=current_user.id).order_by(ActivityLog.timestamp.desc()).limit(20).all()
     
@@ -192,7 +279,8 @@ def home():
     total_tasks = len(tasks)
     done_tasks = sum(1 for t in tasks if t.status == 'Done')
     progress = round((done_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-    return render_template("index.html", tasks=tasks, user_name=current_user.username, progress=progress, logs=logs)
+    
+    return render_template("index.html", tasks=tasks, user_name=current_user.username, progress=progress, logs=logs, current_cat=cat_filter, current_pri=pri_filter)
 
 @app.route("/add", methods=["POST"])
 @login_required
@@ -213,8 +301,18 @@ def add_task():
         db.session.add(new_task)
         db.session.add(ActivityLog(description=f"Created a new task: '{name}' due on {formatted_date}", user_id=current_user.id))
         db.session.commit()
-        if priority == "High" or category == "Urgent":
-            threading.Thread(target=send_email_background, args=(current_user.username, name, priority, category)).start()
+        flash(f"New task '{name}' added successfully! ✅", "success")
+    return redirect(url_for('home'))
+
+# 🚀 BUG FIX: Added new missing route for the Move button
+@app.route("/move/<int:tid>/<string:new_status>")
+@login_required
+def move_task(tid, new_status):
+    task = Task.query.get(tid)
+    if task and (task.user_id == current_user.id or current_user in task.collaborators):
+        task.status = new_status
+        db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
+        db.session.commit()
     return redirect(url_for('home'))
 
 @app.route("/update_status", methods=["POST"])
@@ -243,6 +341,7 @@ def edit_task(tid):
         task.due_date = request.form.get("due_date")
         db.session.add(ActivityLog(description=f"Edited details of task '{task.name}'", user_id=current_user.id))
         db.session.commit()
+        flash("Task updated! 📝", "info")
         return redirect(url_for('home'))
     return render_template("edit.html", task=task)
 
@@ -254,6 +353,7 @@ def delete_task(tid):
         db.session.add(ActivityLog(description=f"Deleted task: '{task.name}'", user_id=current_user.id))
         db.session.delete(task)
         db.session.commit()
+        flash("Task deleted permanently! 🗑️", "success")
     return redirect(url_for('home'))
 
 @app.route("/save_description", methods=["POST"])
@@ -309,6 +409,34 @@ def delete_subtask(sid):
         return jsonify({"success": True})
     return jsonify({"success": False})
 
+# ================= COMMENTS ROUTES =================
+@app.route("/get_comments/<int:tid>")
+@login_required
+def get_comments(tid):
+    task = Task.query.get(tid)
+    if task and (task.user_id == current_user.id or current_user in task.collaborators):
+        comments = Comment.query.filter_by(task_id=tid).order_by(Comment.timestamp.asc()).all()
+        return jsonify([{
+            "id": c.id, 
+            "text": c.text, 
+            "username": c.user.display_name if c.user.display_name else c.user.username.split('@')[0], 
+            "time": c.timestamp.strftime('%I:%M %p')
+        } for c in comments])
+    return jsonify([])
+
+@app.route("/add_comment/<int:tid>", methods=["POST"])
+@login_required
+def add_comment(tid):
+    task = Task.query.get(tid)
+    if task and (task.user_id == current_user.id or current_user in task.collaborators):
+        text = request.get_json().get("text")
+        if text:
+            new_comment = Comment(text=text, task_id=tid, user_id=current_user.id)
+            db.session.add(new_comment)
+            db.session.commit()
+            return jsonify({"success": True})
+    return jsonify({"success": False})
+
 # ================= COLLABORATORS ROUTES =================
 @app.route("/share_task", methods=["POST"])
 @login_required
@@ -333,7 +461,7 @@ def share_task():
 def get_collaborators(tid):
     task = Task.query.get(tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
-        return jsonify([{"id": u.id, "username": u.username} for u in task.collaborators])
+        return jsonify([{"id": u.id, "username": u.display_name if u.display_name else u.username.split('@')[0]} for u in task.collaborators])
     return jsonify([])
 
 @app.route("/remove_collaborator/<int:tid>/<int:uid>", methods=["POST"])
@@ -348,37 +476,33 @@ def remove_collaborator(tid, uid):
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= ANALYTICS DASHBOARD ROUTE 📊 =================
+# ================= DASHBOARD & EXPORT =================
 @app.route("/dashboard")
 @login_required
 def dashboard():
     my_tasks = Task.query.filter_by(user_id=current_user.id).all()
     tasks = list(set(my_tasks + current_user.shared_tasks.all()))
     
-    # 1. Status Data (Pie Chart)
     status_data = {
         'backlog': len([t for t in tasks if t.status == 'Backlog']),
         'todo': len([t for t in tasks if t.status == 'To Do']),
         'in_progress': len([t for t in tasks if t.status == 'In Progress']),
         'done': len([t for t in tasks if t.status == 'Done'])
     }
-    
-    # 2. Priority Data (Bar Chart)
     priority_data = {
         'high': len([t for t in tasks if t.priority == 'High']),
         'medium': len([t for t in tasks if t.priority == 'Medium']),
         'low': len([t for t in tasks if t.priority == 'Low'])
     }
-
-    # 3. Category Data (Doughnut Chart)
     category_data = {
         'personal': len([t for t in tasks if t.category == 'Personal']),
         'work': len([t for t in tasks if t.category == 'Work']),
         'urgent': len([t for t in tasks if t.category == 'Urgent'])
     }
 
+    final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
     return render_template("dashboard.html", 
-                           user_name=current_user.username,
+                           user_name=final_name,
                            total_tasks=len(tasks),
                            status_data=status_data,
                            priority_data=priority_data,
@@ -390,10 +514,12 @@ def clear_done():
     tasks_to_delete = Task.query.filter_by(user_id=current_user.id, status='Done').all()
     for task in tasks_to_delete: db.session.delete(task)
     db.session.commit()
+    flash("All completed tasks cleared! 🧹", "info")
     return redirect(url_for('home'))
 
 @app.route("/about")
-def about(): return render_template("about.html")
+def about(): 
+    return render_template("about.html")
 
 @app.route("/export")
 @login_required
