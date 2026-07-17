@@ -1,20 +1,58 @@
-{% extends "base.html" %}
-{% block body %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4 card shadow-lg p-4 border-0" style="background: #ffffff; color: #0f172a; border-radius: 12px;">
-        <h2 class="text-center mb-4 fw-bold">Join Us 🚀</h2>
-        <form method="POST">
-            <input type="text" name="username" class="form-control mb-3" placeholder="Choose Username" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;" required>
-            <input type="password" name="password" class="form-control mb-3" placeholder="Set Password" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;" required>
-            <button type="submit" class="btn btn-success w-100 fw-bold" style="background: #10b981; border: none; padding: 10px;">Create Account</button>
-        </form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro Elite - Register</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 100%; max-width: 400px; text-align: center; }
+        h2 { margin-bottom: 25px; font-size: 28px; font-weight: bold; color: #10b981; }
+        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 15px; margin-bottom: 20px; text-align: left; position: relative; }
+        label { font-size: 11px; color: #94a3b8; font-weight: bold; display: block; }
+        input { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; margin-top: 5px; }
+        .btn-submit { background: #10b981; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-submit:hover { background: #059669; }
+        .pwd-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
+        .pwd-toggle:hover { opacity: 1; }
+        .link-text { margin-top: 20px; font-size: 14px; color: #94a3b8; display: block; text-decoration: none; }
+        .link-text span { color: #10b981; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2 style="color: #10b981;">Create Account 🚀</h2>
         
-        <div style="text-align: center; margin: 15px 0; color: #64748b; font-size: 12px; font-weight: bold;">OR</div>
-        <a href="/login/google" class="btn w-100" style="background: white; color: #333; border: 2px solid #e2e8f0; font-weight: bold; text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; border-radius: 8px;">
-            <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google Logo"> Sign up with Google
-        </a>
+        <form action="/register" method="POST">
+            <div class="input-box">
+                <label>Choose a Username</label>
+                <input type="text" name="username" placeholder="e.g. bhishmak_123" required>
+            </div>
+            
+            <div class="input-box">
+                <label>Create Password</label>
+                <input type="password" id="reg_password" name="password" placeholder="••••••••" required>
+                <span class="pwd-toggle" onclick="toggleRegPassword()">👁️</span>
+            </div>
+            
+            <button type="submit" class="btn-submit">Sign Up</button>
+        </form>
 
-        <p class="mt-4 text-center small" style="color: #64748b;">Already have account? <a href="/login" style="color: #6366f1; text-decoration: none; font-weight: bold;">Login</a></p>
+        <a href="/login" class="link-text">Already have an account? <span style="color: #10b981;">Login ➔</span></a>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        function toggleRegPassword() {
+            const pwdField = document.getElementById('reg_password');
+            const eyeIcon = event.target;
+            if (pwdField.type === "password") {
+                pwdField.type = "text";
+                eyeIcon.innerText = "🙈";
+            } else {
+                pwdField.type = "password";
+                eyeIcon.innerText = "👁️";
+            }
+        }
+    </script>
+</body>
+</html>
