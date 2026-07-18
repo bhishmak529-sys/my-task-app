@@ -16,6 +16,7 @@ import smtplib
 from email.mime.text import MIMEText
 import threading
 from authlib.integrations.flask_client import OAuth
+from sqlalchemy import text  # 🌟 NEW: Needed for safe DB update
 
 app = Flask(__name__)
 
@@ -57,7 +58,18 @@ class User(db.Model, UserMixin):
     display_name = db.Column(db.String(100), nullable=True)
     profile_pic = db.Column(db.String(300), nullable=True)
     password = db.Column(db.String(150), nullable=False)
+    xp = db.Column(db.Integer, default=0)  # 🌟 NEW: Experience Points Column
     tasks = db.relationship('Task', backref='owner', lazy=True)
+
+    # 🌟 NEW: Dynamic Badge Logic
+    @property
+    def badge(self):
+        current_xp = self.xp if self.xp else 0
+        if current_xp >= 500: return "Legend 💎"
+        elif current_xp >= 300: return "Elite 🥇"
+        elif current_xp >= 150: return "Pro 🥈"
+        elif current_xp >= 50: return "Apprentice 🎖️"
+        else: return "Novice 🥉"
 
 task_collaborators = db.Table('task_collaborators',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
@@ -104,8 +116,14 @@ class Task(db.Model):
     date_created = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     collaborators = db.relationship('User', secondary=task_collaborators, backref=db.backref('shared_tasks', lazy='dynamic'))
 
+# 🌟 NEW: Safe Database Update for Existing Users
 with app.app_context():
     db.create_all()
+    try:
+        db.session.execute(text('ALTER TABLE user ADD COLUMN xp INTEGER DEFAULT 0'))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 # ================= HELPER FUNCTIONS =================
 def send_email_background(recipient_email, task_name, task_priority, task_category):
@@ -304,13 +322,22 @@ def add_task():
         flash(f"New task '{name}' added successfully! ✅", "success")
     return redirect(url_for('home'))
 
-# 🚀 BUG FIX: Added new missing route for the Move button
 @app.route("/move/<int:tid>/<string:new_status>")
 @login_required
 def move_task(tid, new_status):
     task = Task.query.get(tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
+        old_status = task.status
         task.status = new_status
+        
+        # 🌟 GAMIFICATION XP LOGIC 🌟
+        if current_user.xp is None: current_user.xp = 0
+        if old_status != 'Done' and new_status == 'Done':
+            current_user.xp += 10
+        elif old_status == 'Done' and new_status != 'Done':
+            current_user.xp -= 10
+            if current_user.xp < 0: current_user.xp = 0
+
         db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
         db.session.commit()
     return redirect(url_for('home'))
@@ -321,7 +348,17 @@ def update_status():
     data = request.get_json()
     task = Task.query.get(data['task_id'])
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
+        old_status = task.status
         task.status = data['new_status']
+
+        # 🌟 GAMIFICATION XP LOGIC 🌟
+        if current_user.xp is None: current_user.xp = 0
+        if old_status != 'Done' and task.status == 'Done':
+            current_user.xp += 10
+        elif old_status == 'Done' and task.status != 'Done':
+            current_user.xp -= 10
+            if current_user.xp < 0: current_user.xp = 0
+
         db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
         db.session.commit()
         return jsonify({"success": True})
