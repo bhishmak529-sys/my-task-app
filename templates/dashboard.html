@@ -46,7 +46,13 @@
             data: {
                 labels: ['Backlog', 'To Do', 'In Progress', 'Done'],
                 datasets: [{
-                    data: [{{ status_data.backlog }}, {{ status_data.todo }}, {{ status_data.in_progress }}, {{ status_data.done }}],
+                    /* VS Code Fix: Wrapped in quotes and Number() */
+                    data: [
+                        Number("{{ status_data.backlog }}"), 
+                        Number("{{ status_data.todo }}"), 
+                        Number("{{ status_data.in_progress }}"), 
+                        Number("{{ status_data.done }}")
+                    ],
                     backgroundColor: ['#64748b', '#3b82f6', '#f59e0b', '#10b981'],
                     borderWidth: 0
                 }]
@@ -61,7 +67,12 @@
                 labels: ['High', 'Medium', 'Low'],
                 datasets: [{
                     label: 'Tasks by Priority',
-                    data: [{{ priority_data.high }}, {{ priority_data.medium }}, {{ priority_data.low }}],
+                    /* VS Code Fix: Wrapped in quotes and Number() */
+                    data: [
+                        Number("{{ priority_data.high }}"), 
+                        Number("{{ priority_data.medium }}"), 
+                        Number("{{ priority_data.low }}")
+                    ],
                     backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
                     borderRadius: 6
                 }]
