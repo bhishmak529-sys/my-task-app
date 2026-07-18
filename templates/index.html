@@ -9,9 +9,7 @@
 
     <style>
         /* 🎨 CSS VARIABLES */
-        :root {
-            --primary-color: #6366f1;
-        }
+        :root { --primary-color: #6366f1; }
 
         .search-box { width: 100%; padding: 14px 15px; border: 1px solid #334155; border-radius: 12px; background: #1e293b; color: white; outline: none; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: all 0.3s; }
         body.light-mode .search-box { background: #ffffff; color: #0f172a; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -92,14 +90,12 @@
         .log-time { font-size: 11px; color: #94a3b8; font-weight: bold; }
         body.light-mode .log-time { color: #64748b; }
 
-        /* Dynamic Colors for Elements */
         .header-card img { border: 3px solid var(--primary-color) !important; }
         .mobile-move-btn { background: var(--primary-color) !important; }
         .add-task-form button { background: var(--primary-color) !important; }
         .btn-action.btn-edit { color: var(--primary-color); border-color: var(--primary-color); }
         .btn-action.btn-edit:hover { background: var(--primary-color); color: white; }
 
-        /* ⚙️ SETTINGS ICON */
         #settings-icon { cursor: pointer; font-size: 22px; transition: transform 0.3s; display: inline-block; user-select: none; }
         #settings-icon:hover { transform: rotate(90deg); }
         body.light-mode #settings-icon { filter: brightness(0.2) contrast(2); }
@@ -108,7 +104,6 @@
         .color-btn:hover { transform: scale(1.2); }
         body.light-mode .color-btn { border-color: #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        /* 📸 PROFILE MODAL STYLES */
         .edit-input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 10px 15px; margin-bottom: 25px; transition: 0.3s; text-align: left; position: relative; }
         body.light-mode .edit-input-box { background: #f8fafc; border-color: #cbd5e1; }
         .edit-input-field { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; padding: 0; margin-top: 5px; font-weight: 500; }
@@ -118,11 +113,9 @@
         .edit-text-color { color: white; }
         body.light-mode .edit-text-color { color: #0f172a; }
 
-        /* 👁️ PASSWORD TOGGLE EYE LOGIC */
         .pwd-toggle-eye { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; font-size: 16px; user-select: none; opacity: 0.6; }
         .pwd-toggle-eye:hover { opacity: 1; }
 
-        /* 🔍 ADVANCED FILTER PANEL STYLES */
         .filter-panel-wrapper { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
         .filter-dropdown { padding: 12px; background: #0f172a; color: white; border: 1px solid #334155; border-radius: 10px; font-size: 14px; outline: none; flex-grow: 1; }
         body.light-mode .filter-dropdown { background: #ffffff; color: #0f172a; border-color: #e2e8f0; }
@@ -130,13 +123,16 @@
         .btn-clear { background: #334155; color: white; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: bold; display: flex; align-items: center; transition: 0.2s; }
         .btn-clear:hover { background: #ef4444; }
 
-        /* 🚀 NEW: PREMIUM TOAST NOTIFICATIONS */
         .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .flash-alert { min-width: 250px; padding: 15px 20px; border-radius: 8px; background: #1e293b; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 5px solid var(--primary-color); animation: slideIn 0.4s ease forwards; font-weight: bold; }
         .alert-success { border-left-color: #10b981; }
         .alert-error { border-left-color: #ef4444; }
         .alert-info { border-left-color: #3b82f6; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* 🌟 NEW: Gamification Badge Style */
+        .xp-badge { display: inline-block; background: #1e293b; color: #fbbf24; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #f59e0b; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        body.light-mode .xp-badge { background: #fef3c7; color: #d97706; border-color: #fcd34d; }
     </style>
 
     <script>
@@ -170,7 +166,12 @@
                         <span id="settings-icon" title="Account Settings" onclick="document.getElementById('profileModal').style.display='flex'">⚙️</span>
                     </div>
                     {% set final_name = current_user.display_name if current_user.display_name else user_name.split('@')[0] %}
-                    <p style="margin-top: 5px; margin-bottom: 0;">Welcome back, <b style="color: var(--primary-color);">{{ final_name }}</b>!</p>
+                    
+                    <!-- 🌟 NEW: Header Level Display -->
+                    <p style="margin-top: 5px; margin-bottom: 0; display: flex; align-items: center;">
+                        Welcome back, <b style="color: var(--primary-color); margin-left: 5px;">{{ final_name }}</b>! 
+                        <span class="xp-badge" title="Complete tasks to level up!">{{ current_user.badge }} ({{ current_user.xp }} XP)</span>
+                    </p>
                 </div>
             </div>
             
@@ -231,7 +232,6 @@
         </div>
 
         <div class="kanban-board">
-            <!-- 🌟 FIX: Updated Button Label to "Move to Next" -->
             {% set statuses = [
                 ('Backlog', '📁 Backlog', 'To Do', 'Move to Next'),
                 ('To Do', '📋 To Do', 'In Progress', 'Move to Next'),
@@ -295,7 +295,6 @@
                         </div>
                         
                         {% if next_status %}
-                        <!-- 🌟 FIX: Updated action to go directly to /move route -->
                         <a href="/move/{{ t.id }}/{{ next_status }}" class="btn-action mobile-move-btn" onclick="event.stopPropagation();" style="color:white; background: var(--primary-color);">{{ next_label }} ➔</a>
                         {% endif %}
                     </div>
@@ -349,6 +348,18 @@
                             <span style="color: #3b82f6; font-size: 14px; font-weight: 600; cursor: pointer;" onclick="document.getElementById('hidden-file-input').click()">Edit picture</span>
                         </div>
                         <input type="file" id="hidden-file-input" name="profile_pic" accept="image/*" style="display: none;" onchange="previewImage(event)">
+                    </div>
+
+                    <!-- 🌟 NEW: Gamification Stats in Modal -->
+                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center;">
+                        <h4 style="margin: 0 0 5px 0; color: #f59e0b; font-size: 16px;">Current Rank: {{ current_user.badge }}</h4>
+                        <p style="margin: 0; font-size: 13px; color: #94a3b8;"><b style="color: white;">{{ current_user.xp }}</b> / 500 XP to reach Legend 💎</p>
+                        
+                        <!-- Progress Bar (Fixed the VS Code HTML Parse Error here) -->
+                        <div style="width: 100%; background: #0f172a; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; border: 1px solid #334155;">
+                            <div style="height: 100%; background: #f59e0b; width: {{ [current_user.xp / 5, 100] | min }}%; transition: width 0.5s ease;"></div>
+                        </div>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #64748b;">Complete tasks (+10 XP) to rank up!</p>
                     </div>
 
                     <div class="edit-input-box">
