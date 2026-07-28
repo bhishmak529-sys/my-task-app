@@ -1,56 +1,133 @@
-{% extends 'base.html' %}
-{% block body %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-6">
-        <div class="card shadow p-4 border-0" style="background: #1e293b; color: white; border-radius: 12px;">
-            <h4 class="fw-bold mb-4 text-center text-white">✏️ Edit Kanban Card</h4>
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Task Title</label>
-                    <input type="text" name="task_name" class="form-control" style="background: #0f172a; color: white; border: 1px solid #334155;" value="{{ task.name }}" required>
-                </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Category</label>
-                        <select name="category" class="form-select" style="background: #0f172a; color: white; border: 1px solid #334155;">
-                            <option value="Personal" {% if task.category == 'Personal' %}selected{% endif %}>Personal</option>
-                            <option value="Work" {% if task.category == 'Work' %}selected{% endif %}>Work 💻</option>
-                            <option value="Urgent" {% if task.category == 'Urgent' %}selected{% endif %}>Urgent 🔥</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Priority</label>
-                        <select name="priority" class="form-select" style="background: #0f172a; color: white; border: 1px solid #334155;">
-                            <option value="High" {% if task.priority == 'High' %}selected{% endif %}>High</option>
-                            <option value="Medium" {% if task.priority == 'Medium' %}selected{% endif %}>Medium</option>
-                            <option value="Low" {% if task.priority == 'Low' %}selected{% endif %}>Low</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Due Date</label>
-                        <input type="text" name="due_date" class="form-control" style="background: #0f172a; color: white; border: 1px solid #334155;" value="{{ task.due_date }}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Board Status</label>
-                        <select name="status" class="form-select" style="background: #0f172a; color: white; border: 1px solid #334155;">
-                            <option value="Backlog" {% if task.status == 'Backlog' %}selected{% endif %}>Backlog</option>
-                            <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
-                            <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                            <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold" style="background: #6366f1; border: none;">Save Changes</button>
-                    <a href="/" class="btn btn-outline-secondary w-100 text-white" style="border-color: #334155;">Cancel</a>
-                </div>
-            </form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Task - TaskPro Elite</title>
+    <style>
+        /* 🎨 Base Styling */
+        body { background: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        
+        /* 🎨 Container & Layout */
+        .container { max-width: 850px; margin: 0 auto; background: #1e293b; padding: 35px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid #334155; }
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .back-btn { background: #6366f1; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
+        .back-btn:hover { background: #4f46e5; transform: translateY(-2px); }
+        
+        /* 🎨 Form Elements */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; letter-spacing: 0.5px; }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 15px; box-sizing: border-box; transition: 0.3s; }
+        input[type="text"]:focus, select:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+        
+        .btn-save { background: #10b981; color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; transition: 0.3s; box-shadow: 0 4px 10px rgba(16,185,129,0.3); }
+        .btn-save:hover { background: #059669; transform: translateY(-2px); }
+        
+        /* 🎨 Attachments Section */
+        .attachments-section { background: #0f172a; padding: 25px; border-radius: 12px; margin-top: 35px; border: 1px dashed #475569; }
+        .attachments-header { color: #f8fafc; margin-top: 0; margin-bottom: 20px; font-size: 1.3em; display: flex; align-items: center; gap: 10px; }
+        
+        .file-upload-form { display: flex; gap: 12px; align-items: center; margin-bottom: 25px; background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
+        .file-upload-form input[type="file"] { flex-grow: 1; padding: 8px; color: #cbd5e1; font-size: 14px; }
+        .upload-btn { background: #6366f1; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .upload-btn:hover { background: #4f46e5; }
+        
+        /* 🎨 Uploaded Files Grid */
+        .uploaded-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .file-card { background: #1e293b; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #334155; transition: transform 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; }
+        .file-card:hover { transform: translateY(-5px); border-color: #6366f1; }
+        .file-link { color: #818cf8; text-decoration: none; font-weight: 600; display: block; word-break: break-all; font-size: 14px; }
+        .file-link:hover { color: #a5b4fc; text-decoration: underline; }
+        .delete-btn { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; transition: 0.3s; }
+        .delete-btn:hover { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="nav">
+            <h2 style="margin: 0; color: #f8fafc;">📝 Edit Task Details</h2>
+            <a href="/" class="back-btn">← Back to Board</a>
         </div>
+
+        <!-- ================= MAIN TASK EDIT FORM ================= -->
+        <form action="/edit/{{ task.id }}" method="POST">
+            <div class="form-group">
+                <label>Task Name</label>
+                <input type="text" name="task_name" value="{{ task.name }}" required>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="Personal" {% if task.category == 'Personal' %}selected{% endif %}>Personal</option>
+                        <option value="Work" {% if task.category == 'Work' %}selected{% endif %}>Work</option>
+                        <option value="Urgent" {% if task.category == 'Urgent' %}selected{% endif %}>Urgent</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select name="priority">
+                        <option value="High" {% if task.priority == 'High' %}selected{% endif %}>High</option>
+                        <option value="Medium" {% if task.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="Low" {% if task.priority == 'Low' %}selected{% endif %}>Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="Backlog" {% if task.status == 'Backlog' %}selected{% endif %}>Backlog</option>
+                        <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                        <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                        <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="text" name="due_date" value="{{ task.due_date }}" placeholder="e.g. 25 Jul 2026">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">💾 Update Task</button>
+        </form>
+
+        <!-- ================= MEDIA & ATTACHMENTS SECTION ================= -->
+        <div class="attachments-section">
+            <h3 class="attachments-header">📎 Attached Files & Media</h3>
+            
+            <!-- File Upload Form (enctype is required for files) -->
+            <form action="/upload_attachment/{{ task.id }}" method="POST" enctype="multipart/form-data" class="file-upload-form">
+                <input type="file" name="task_file" multiple required>
+                <button type="submit" class="upload-btn">⬆️ Upload Files</button>
+            </form>
+
+            <!-- Display Uploaded Files in a Grid -->
+            <div class="uploaded-files">
+                {% for att in task.attachments %}
+                    <div class="file-card">
+                        <a href="{{ att.file_path }}" target="_blank" class="file-link">
+                            📄 Open File
+                        </a>
+                        
+                        <!-- Delete Attachment Action -->
+                        <form action="/remove_attachment/{{ att.id }}" method="POST">
+                            <button type="submit" class="delete-btn">🗑️ Delete</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p style="color: #64748b; font-size: 15px; grid-column: 1 / -1; text-align: center; font-style: italic;">
+                        No files attached yet. Drop your media here!
+                    </p>
+                {% endfor %}
+            </div>
+        </div>
+        
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
