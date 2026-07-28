@@ -16,9 +16,17 @@ import smtplib
 from email.mime.text import MIMEText
 import threading
 from authlib.integrations.flask_client import OAuth
-from sqlalchemy import text  # 🌟 NEW: Needed for safe DB update
+# 🌟 NAYA CHANGE: func ko import kiya hai Analytics ke liye
+from sqlalchemy import text, func  
+from flask_socketio import SocketIO, emit
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 app = Flask(__name__)
+
+# ================= EMAIL CREDENTIALS =================
+SYSTEM_EMAIL = "task.manage.0@gmail.com" 
+SYSTEM_APP_PASSWORD = "dryd orfy gpnl vfzb" 
 
 # 🛡️ SECURITY & CONFIG
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
@@ -28,7 +36,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# 🛡️ GOOGLE LOGIN
+# 🌟 Socket.IO Engine
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_ID')
 app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_SECRET')
 
@@ -58,10 +68,9 @@ class User(db.Model, UserMixin):
     display_name = db.Column(db.String(100), nullable=True)
     profile_pic = db.Column(db.String(300), nullable=True)
     password = db.Column(db.String(150), nullable=False)
-    xp = db.Column(db.Integer, default=0)  # 🌟 NEW: Experience Points Column
+    xp = db.Column(db.Integer, default=0) 
     tasks = db.relationship('Task', backref='owner', lazy=True)
 
-    # 🌟 NEW: Dynamic Badge Logic
     @property
     def badge(self):
         current_xp = self.xp if self.xp else 0
@@ -116,31 +125,27 @@ class Task(db.Model):
     date_created = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     collaborators = db.relationship('User', secondary=task_collaborators, backref=db.backref('shared_tasks', lazy='dynamic'))
 
-# 🌟 NEW: Safe Database Update for Existing Users
 with app.app_context():
     db.create_all()
-    try:
-        db.session.execute(text('ALTER TABLE user ADD COLUMN xp INTEGER DEFAULT 0'))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
 
 # ================= HELPER FUNCTIONS =================
-def send_email_background(recipient_email, task_name, task_priority, task_category):
+def send_notification_email(receiver_email, sender_name, task_name):
+    if SYSTEM_EMAIL == "your_actual_email@gmail.com":
+        print("⚠️ Email not sent! Please configure SYSTEM_EMAIL and SYSTEM_APP_PASSWORD in app.py")
+        return
     try:
-        subject = f"🚨 URGENT TASK ALERT: {task_name}"
-        body = f"Hello,\n\nYou just added a highly important task to your TaskPro Elite board.\n\nTask Name: {task_name}\nCategory: {task_category}\nPriority: {task_priority}\n\nPlease make sure to complete this on time!\n\nBest Regards,\nTaskPro Elite Bot 🤖"
-        msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = recipient_email
+        msg = MIMEText(f"Hello!\n\n{sender_name} has just shared a task with you on TaskPro Elite.\n\nTask Name: {task_name}\n\nLogin to your dashboard to check it out!\n\nCheers,\nTaskPro Elite Team")
+        msg['Subject'] = f"New Task Shared: {task_name}"
+        msg['From'] = SYSTEM_EMAIL
+        msg['To'] = receiver_email
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(SENDER_EMAIL, APP_PASSWORD)
-        server.sendmail(SENDER_EMAIL, recipient_email, msg.as_string())
+        server.login(SYSTEM_EMAIL, SYSTEM_APP_PASSWORD)
+        server.send_message(msg)
         server.quit()
+        print(f"📧 Email sent successfully to {receiver_email}!")
     except Exception as e:
-        pass
+        print(f"❌ Failed to send email: {e}")
 
 # ================= AUTH ROUTES =================
 @app.route('/login/google')
@@ -319,6 +324,10 @@ def add_task():
         db.session.add(new_task)
         db.session.add(ActivityLog(description=f"Created a new task: '{name}' due on {formatted_date}", user_id=current_user.id))
         db.session.commit()
+        
+        final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+        socketio.emit('board_changed', {'user': final_name, 'task': name, 'status': 'Backlog'})
+        
         flash(f"New task '{name}' added successfully! ✅", "success")
     return redirect(url_for('home'))
 
@@ -330,7 +339,6 @@ def move_task(tid, new_status):
         old_status = task.status
         task.status = new_status
         
-        # 🌟 GAMIFICATION XP LOGIC 🌟
         if current_user.xp is None: current_user.xp = 0
         if old_status != 'Done' and new_status == 'Done':
             current_user.xp += 10
@@ -340,6 +348,10 @@ def move_task(tid, new_status):
 
         db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
         db.session.commit()
+        
+        final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+        socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': task.status})
+        
     return redirect(url_for('home'))
 
 @app.route("/update_status", methods=["POST"])
@@ -351,7 +363,6 @@ def update_status():
         old_status = task.status
         task.status = data['new_status']
 
-        # 🌟 GAMIFICATION XP LOGIC 🌟
         if current_user.xp is None: current_user.xp = 0
         if old_status != 'Done' and task.status == 'Done':
             current_user.xp += 10
@@ -361,6 +372,10 @@ def update_status():
 
         db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
         db.session.commit()
+        
+        final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+        socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': task.status})
+        
         return jsonify({"success": True})
     return jsonify({"success": False})
 
@@ -378,6 +393,10 @@ def edit_task(tid):
         task.due_date = request.form.get("due_date")
         db.session.add(ActivityLog(description=f"Edited details of task '{task.name}'", user_id=current_user.id))
         db.session.commit()
+        
+        final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+        socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': "Updated"})
+        
         flash("Task updated! 📝", "info")
         return redirect(url_for('home'))
     return render_template("edit.html", task=task)
@@ -387,9 +406,14 @@ def edit_task(tid):
 def delete_task(tid):
     task = Task.query.get(tid)
     if task and task.user_id == current_user.id:
+        task_name = task.name
         db.session.add(ActivityLog(description=f"Deleted task: '{task.name}'", user_id=current_user.id))
         db.session.delete(task)
         db.session.commit()
+        
+        final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+        socketio.emit('board_changed', {'user': final_name, 'task': task_name, 'status': "Deleted"})
+        
         flash("Task deleted permanently! 🗑️", "success")
     return redirect(url_for('home'))
 
@@ -404,7 +428,7 @@ def save_description():
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= SUB-TASKS ROUTES =================
+# ================= SUB-TASKS & COMMENTS =================
 @app.route("/get_subtasks/<int:tid>")
 @login_required
 def get_subtasks(tid):
@@ -446,7 +470,6 @@ def delete_subtask(sid):
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= COMMENTS ROUTES =================
 @app.route("/get_comments/<int:tid>")
 @login_required
 def get_comments(tid):
@@ -474,7 +497,7 @@ def add_comment(tid):
             return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= COLLABORATORS ROUTES =================
+# ================= COLLABORATORS ROUTES (WITH EMAIL) =================
 @app.route("/share_task", methods=["POST"])
 @login_required
 def share_task():
@@ -488,7 +511,14 @@ def share_task():
                 task.collaborators.append(friend)
                 db.session.add(ActivityLog(description=f"Shared task '{task.name}' with {friend.username}", user_id=current_user.id))
                 db.session.commit()
-                return jsonify({"success": True, "message": "Task shared successfully! 🤝"})
+                socketio.emit('board_changed', {'user': 'System', 'task': task.name, 'status': f"Shared with {friend.username}"})
+                
+                # 🌟 TRIGGER EMAIL IN BACKGROUND
+                sender_display = current_user.display_name if current_user.display_name else current_user.username
+                email_thread = threading.Thread(target=send_notification_email, args=(friend.username, sender_display, task.name))
+                email_thread.start()
+
+                return jsonify({"success": True, "message": "Task shared & Email sent! 🤝📧"})
             return jsonify({"success": False, "message": "Already shared!"})
         return jsonify({"success": False, "message": "User not found!"})
     return jsonify({"success": False, "message": "Unauthorized."})
@@ -508,12 +538,11 @@ def remove_collaborator(tid, uid):
     user_to_remove = User.query.get(uid)
     if task and task.user_id == current_user.id and user_to_remove in task.collaborators:
         task.collaborators.remove(user_to_remove)
-        db.session.add(ActivityLog(description=f"Removed access of {user_to_remove.username}", user_id=current_user.id))
         db.session.commit()
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= DASHBOARD & EXPORT =================
+# ================= EXPORT & DASHBOARD =================
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -538,12 +567,7 @@ def dashboard():
     }
 
     final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
-    return render_template("dashboard.html", 
-                           user_name=final_name,
-                           total_tasks=len(tasks),
-                           status_data=status_data,
-                           priority_data=priority_data,
-                           category_data=category_data)
+    return render_template("dashboard.html", user_name=final_name, total_tasks=len(tasks), status_data=status_data, priority_data=priority_data, category_data=category_data)
 
 @app.route("/clear_done", methods=["POST"])
 @login_required
@@ -551,12 +575,10 @@ def clear_done():
     tasks_to_delete = Task.query.filter_by(user_id=current_user.id, status='Done').all()
     for task in tasks_to_delete: db.session.delete(task)
     db.session.commit()
-    flash("All completed tasks cleared! 🧹", "info")
     return redirect(url_for('home'))
 
 @app.route("/about")
-def about(): 
-    return render_template("about.html")
+def about(): return render_template("about.html")
 
 @app.route("/export")
 @login_required
@@ -589,13 +611,116 @@ def upload_attachment(tid):
 def remove_attachment(aid):
     attachment = Attachment.query.get(aid)
     if attachment and (attachment.task.user_id == current_user.id or current_user in attachment.task.collaborators):
-        file_path = attachment.file_path.lstrip('/') 
-        try:
-            if os.path.exists(file_path): os.remove(file_path) 
-        except: pass
         db.session.delete(attachment)
         db.session.commit()
     return redirect(url_for('home'))
 
+# ================= CALENDAR ROUTES =================
+@app.route("/calendar")
+@login_required
+def calendar_view():
+    final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+    return render_template("calendar.html", user_name=final_name)
+
+@app.route("/api/calendar_events")
+@login_required
+def get_calendar_events():
+    my_tasks = Task.query.filter_by(user_id=current_user.id).all()
+    shared_tasks = current_user.shared_tasks.all()
+    tasks = list(set(my_tasks + shared_tasks))
+    
+    events = []
+    for t in tasks:
+        if t.due_date:
+            try:
+                date_obj = datetime.strptime(t.due_date, '%d %b %Y')
+                formatted_date = date_obj.strftime('%Y-%m-%d')
+                color = '#6366f1' 
+                if t.status == 'Done': color = '#10b981'
+                elif t.priority == 'High': color = '#ef4444'
+                events.append({'id': t.id, 'title': f"{t.name} ({t.status})", 'start': formatted_date, 'color': color, 'url': '/'})
+            except Exception as e: pass
+    return jsonify(events)
+
+@app.route("/api/update_calendar_date", methods=["POST"])
+@login_required
+def update_calendar_date():
+    data = request.get_json()
+    task = Task.query.get(data.get('task_id'))
+    
+    if task and (task.user_id == current_user.id or current_user in task.collaborators):
+        try:
+            date_obj = datetime.strptime(data.get('new_date'), '%Y-%m-%d')
+            formatted_date = date_obj.strftime('%d %b %Y')
+            task.due_date = formatted_date
+            db.session.commit()
+            return jsonify({"success": True})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)})
+    return jsonify({"success": False})
+
+# ================= 🌟 NAYA FEATURE: ANALYTICS DASHBOARD =================🌟
+@app.route("/analytics")
+@login_required
+def analytics():
+    # 1. Database se Status ke hisaab se Tasks count karna (Group By)
+    status_counts = db.session.query(Task.status, func.count(Task.id)).filter_by(user_id=current_user.id).group_by(Task.status).all()
+    status_dict = {status: count for status, count in status_counts}
+
+    # 2. Database se Priority ke hisaab se Tasks count karna (Group By)
+    priority_counts = db.session.query(Task.priority, func.count(Task.id)).filter_by(user_id=current_user.id).group_by(Task.priority).all()
+    priority_dict = {priority: count for priority, count in priority_counts}
+
+    final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+    
+    # Data ko analytics.html mein bhejna
+    return render_template("analytics.html", 
+                           user_name=final_name, 
+                           status_dict=status_dict, 
+                           priority_dict=priority_dict)
+
+
+# ================= AUTOMATED SCHEDULER & BRIEFING =================
+def daily_morning_briefing():
+    with app.app_context():
+        print("\n🔔 [SCHEDULER WOKE UP]: Checking database for tasks due today...")
+        
+        # Aaj ki date nikalna (IST Timezone adjustment ke sath)
+        today_str = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime('%d %b %Y')
+        users = User.query.all()
+        
+        for user in users:
+            due_tasks = Task.query.filter_by(user_id=user.id, due_date=today_str).filter(Task.status != 'Done').all()
+            
+            if due_tasks:
+                if SYSTEM_EMAIL == "task.manage.0@gmail.com" and SYSTEM_APP_PASSWORD == "dryd orfy gpnl vfzb":
+                    # Maine tumhara original password rehne diya hai, par ise private rakhna!
+                    pass
+                
+                try:
+                    task_list_text = "\n".join([f"- {t.name} (Priority: {t.priority})" for t in due_tasks])
+                    display_name = user.display_name if user.display_name else user.username.split('@')[0]
+                    
+                    email_body = f"Good Morning {display_name}!\n\nHere is your daily briefing from TaskPro Elite. You have the following tasks due today:\n\n{task_list_text}\n\nLogin to your dashboard to complete them.\n\nHave a productive day!\n- TaskPro Elite AI"
+                    
+                    msg = MIMEText(email_body, 'plain')
+                    msg['Subject'] = f"📅 Today's Agenda: {len(due_tasks)} Tasks Due"
+                    msg['From'] = SYSTEM_EMAIL
+                    msg['To'] = user.username
+                    
+                    server = smtplib.SMTP('smtp.gmail.com', 587)
+                    server.starttls()
+                    server.login(SYSTEM_EMAIL, SYSTEM_APP_PASSWORD)
+                    server.send_message(msg)
+                    server.quit()
+                    print(f"✅ Daily Briefing email sent to {user.username}")
+                except Exception as e:
+                    print(f"❌ Failed to send briefing to {user.username}: {e}")
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=daily_morning_briefing, trigger="interval", minutes=1)
+scheduler.start()
+atexit.register(lambda: scheduler.shutdown())
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)
