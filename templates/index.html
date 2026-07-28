@@ -6,6 +6,9 @@
     <title>TaskPro Elite - Board</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- 🌟 NAYA: SortableJS CDN Add Kiya Hai -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <style>
         /* 🎨 CSS VARIABLES */
@@ -130,9 +133,13 @@
         .alert-info { border-left-color: #3b82f6; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* 🌟 NEW: Gamification Badge Style */
         .xp-badge { display: inline-block; background: #1e293b; color: #fbbf24; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #f59e0b; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         body.light-mode .xp-badge { background: #fef3c7; color: #d97706; border-color: #fcd34d; }
+
+        /* 🌟 NAYA: Ghost styling for smooth drag visuals */
+        .sortable-ghost { opacity: 0.4; background: #334155; border: 2px dashed var(--primary-color) !important; border-radius: 8px; }
+        .task-card { cursor: grab; }
+        .task-card:active { cursor: grabbing; }
     </style>
 
     <script>
@@ -167,7 +174,6 @@
                     </div>
                     {% set final_name = current_user.display_name if current_user.display_name else user_name.split('@')[0] %}
                     
-                    <!-- 🌟 NEW: Header Level Display -->
                     <p style="margin-top: 5px; margin-bottom: 0; display: flex; align-items: center;">
                         Welcome back, <b style="color: var(--primary-color); margin-left: 5px;">{{ final_name }}</b>! 
                         <span class="xp-badge" title="Complete tasks to level up!">{{ current_user.badge }} ({{ current_user.xp }} XP)</span>
@@ -176,6 +182,9 @@
             </div>
             
             <div class="top-links">
+                <!-- 🌟 NEW: Calendar Button -->
+                <a href="/calendar" style="background: #f59e0b; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold; text-decoration: none;">🗓️ Calendar</a>
+                
                 <button onclick="document.getElementById('activityModal').style.display='flex'" style="background: #8b5cf6; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;">📜 Activity</button>
                 <a href="/export" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold; text-decoration: none;">📥 Export</a>
                 <a href="/dashboard" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; font-weight: bold; text-decoration: none;">📊 Dashboard</a>
@@ -240,7 +249,8 @@
             ] %}
 
             {% for status_key, status_title, next_status, next_label in statuses %}
-            <div class="kanban-column" data-status="{{ status_key }}" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+            <!-- 🌟 NAYA: Native drag events hata diye -->
+            <div class="kanban-column">
                 
                 <div class="col-header">
                     <span>{{ status_title }}</span>
@@ -254,76 +264,80 @@
                     </div>
                 </div>
                 
-                {% for t in tasks if t.status == status_key %}
-                <div class="task-card {% if t.is_overdue %}overdue-card{% elif t.is_due_soon %}due-soon-card{% endif %}" draggable="true" ondragstart="drag(event)" data-id="{{ t.id }}" data-desc="{{ t.description or '' }}" onclick="openModal(this, event)">
-                    
-                    <div class="task-meta">
-                        <span class="badge badge-cat">{{ t.category }}</span>
-                        <span class="badge badge-{{ t.priority|lower }}">{{ t.priority }}</span>
+                <!-- 🌟 NAYA: Wrapper for SortableJS -->
+                <div class="sortable-task-list" data-status="{{ status_key }}" style="flex-grow: 1; min-height: 150px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                    {% for t in tasks if t.status == status_key %}
+                    <!-- 🌟 NAYA: draggable="true" aur ondragstart() hata diya -->
+                    <div class="task-card {% if t.is_overdue %}overdue-card{% elif t.is_due_soon %}due-soon-card{% endif %}" data-id="{{ t.id }}" data-desc="{{ t.description or '' }}" onclick="openModal(this, event)">
                         
-                        {% if t.due_date %}
-                            {% if t.is_overdue %}
-                                <span class="badge badge-overdue">⚠️ OVERDUE: {{ t.due_date }}</span>
-                            {% elif t.is_due_soon %}
-                                <span class="badge badge-due-soon">⏳ DUE SOON: {{ t.due_date }}</span>
-                            {% else %}
-                                <span class="badge badge-date">📅 {{ t.due_date }}</span>
+                        <div class="task-meta">
+                            <span class="badge badge-cat">{{ t.category }}</span>
+                            <span class="badge badge-{{ t.priority|lower }}">{{ t.priority }}</span>
+                            
+                            {% if t.due_date %}
+                                {% if t.is_overdue %}
+                                    <span class="badge badge-overdue">⚠️ OVERDUE: {{ t.due_date }}</span>
+                                {% elif t.is_due_soon %}
+                                    <span class="badge badge-due-soon">⏳ DUE SOON: {{ t.due_date }}</span>
+                                {% else %}
+                                    <span class="badge badge-date">📅 {{ t.due_date }}</span>
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
-                        
-                        {% if t.comments|length > 0 %}
-                        <span class="badge" style="background:#f43f5e;">💬 {{ t.comments|length }}</span>
-                        {% endif %}
+                            
+                            {% if t.comments|length > 0 %}
+                            <span class="badge" style="background:#f43f5e;">💬 {{ t.comments|length }}</span>
+                            {% endif %}
 
-                        {% if t.attachments|length > 0 %}
-                        <span class="badge" style="background:#10b981;">📎 {{ t.attachments|length }}</span>
-                        {% endif %}
-                        
-                        {% if current_user.username != t.owner.username %}
-                        <span class="badge" style="background:var(--primary-color);">🤝 Shared</span>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="task-title" {% if t.status == 'Done' %}style="text-decoration: line-through; opacity: 0.5;"{% endif %}>
-                        {{ t.name }}
-                    </div>
-                    
-                    <div class="task-actions">
-                        <div>
-                            <a href="/edit/{{ t.id }}" class="btn-action btn-edit" onclick="event.stopPropagation();">Edit</a>
-                            <a href="/delete/{{ t.id }}" class="btn-action btn-delete" onclick="event.stopPropagation();">Delete</a>
+                            {% if t.attachments|length > 0 %}
+                            <span class="badge" style="background:#10b981;">📎 {{ t.attachments|length }}</span>
+                            {% endif %}
+                            
+                            {% if current_user.username != t.owner.username %}
+                            <span class="badge" style="background:var(--primary-color);">🤝 Shared</span>
+                            {% endif %}
                         </div>
                         
-                        {% if next_status %}
-                        <a href="/move/{{ t.id }}/{{ next_status }}" class="btn-action mobile-move-btn" onclick="event.stopPropagation();" style="color:white; background: var(--primary-color);">{{ next_label }} ➔</a>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="hidden-attachments-data" style="display:none;">
-                        <div class="attachment-grid">
-                            {% for att in t.attachments %}
-                                <div class="attachment-card">
-                                    <form action="/remove_attachment/{{ att.id }}" method="POST" style="margin:0; position:absolute; top:0; right:0;" onsubmit="if(confirm('Are you sure you want to delete this file permanently?')) { localStorage.setItem('reopen_modal', '{{ t.id }}'); return true; } return false;">
-                                        <button type="submit" class="delete-badge-btn" title="Delete File">✖</button>
-                                    </form>
-
-                                    {% if att.file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')) %}
-                                        <img src="{{ att.file_path }}" onclick="openLightbox('{{ att.file_path }}')" title="Click to view full screen">
-                                        <a href="{{ att.file_path }}" target="_blank" class="attachment-link">Open Image ↗</a>
-                                    {% else %}
-                                        <div style="height: 90px; display: flex; align-items: center; justify-content: center; font-size: 35px;">📄</div>
-                                        <a href="{{ att.file_path }}" target="_blank" class="attachment-link">View Doc ↗</a>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
+                        <div class="task-title" {% if t.status == 'Done' %}style="text-decoration: line-through; opacity: 0.5;"{% endif %}>
+                            {{ t.name }}
                         </div>
-                        {% if t.attachments|length == 0 %}
-                            <p style="color:#64748b; font-size:13px; margin:0;">No file attached yet.</p>
-                        {% endif %}
+                        
+                        <div class="task-actions">
+                            <div>
+                                <a href="/edit/{{ t.id }}" class="btn-action btn-edit" onclick="event.stopPropagation();">Edit</a>
+                                <a href="/delete/{{ t.id }}" class="btn-action btn-delete" onclick="event.stopPropagation();">Delete</a>
+                            </div>
+                            
+                            {% if next_status %}
+                            <a href="/move/{{ t.id }}/{{ next_status }}" class="btn-action mobile-move-btn" onclick="event.stopPropagation();" style="color:white; background: var(--primary-color);">{{ next_label }} ➔</a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="hidden-attachments-data" style="display:none;">
+                            <div class="attachment-grid">
+                                {% for att in t.attachments %}
+                                    <div class="attachment-card">
+                                        <form action="/remove_attachment/{{ att.id }}" method="POST" style="margin:0; position:absolute; top:0; right:0;" onsubmit="if(confirm('Are you sure you want to delete this file permanently?')) { localStorage.setItem('reopen_modal', '{{ t.id }}'); return true; } return false;">
+                                            <button type="submit" class="delete-badge-btn" title="Delete File">✖</button>
+                                        </form>
+
+                                        {% if att.file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')) %}
+                                            <img src="{{ att.file_path }}" onclick="openLightbox('{{ att.file_path }}')" title="Click to view full screen">
+                                            <a href="{{ att.file_path }}" target="_blank" class="attachment-link">Open Image ↗</a>
+                                        {% else %}
+                                            <div style="height: 90px; display: flex; align-items: center; justify-content: center; font-size: 35px;">📄</div>
+                                            <a href="{{ att.file_path }}" target="_blank" class="attachment-link">View Doc ↗</a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if t.attachments|length == 0 %}
+                                <p style="color:#64748b; font-size:13px; margin:0;">No file attached yet.</p>
+                            {% endif %}
+                        </div>
+                        
                     </div>
-                    
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
             {% endfor %}
         </div>
@@ -350,12 +364,10 @@
                         <input type="file" id="hidden-file-input" name="profile_pic" accept="image/*" style="display: none;" onchange="previewImage(event)">
                     </div>
 
-                    <!-- 🌟 NEW: Gamification Stats in Modal -->
                     <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center;">
                         <h4 style="margin: 0 0 5px 0; color: #f59e0b; font-size: 16px;">Current Rank: {{ current_user.badge }}</h4>
                         <p style="margin: 0; font-size: 13px; color: #94a3b8;"><b style="color: white;">{{ current_user.xp }}</b> / 500 XP to reach Legend 💎</p>
                         
-                        <!-- Progress Bar (Fixed the VS Code HTML Parse Error here) -->
                         <div style="width: 100%; background: #0f172a; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; border: 1px solid #334155;">
                             <div style="height: 100%; background: #f59e0b; width: {{ [current_user.xp / 5, 100] | min }}%; transition: width 0.5s ease;"></div>
                         </div>
@@ -759,26 +771,39 @@
             }
         });
 
-        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
-        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
-        function drag(ev) {
-            ev.dataTransfer.setData("taskId", ev.currentTarget.getAttribute('data-id'));
-            setTimeout(() => { ev.target.style.opacity = "0.5"; }, 0);
-        }
-        function drop(ev) {
-            ev.preventDefault();
-            ev.currentTarget.classList.remove('drag-over');
-            let taskId = ev.dataTransfer.getData("taskId");
-            let newStatus = ev.currentTarget.getAttribute('data-status');
-            
-            checkAndCelebrate(newStatus);
-            
-            fetch('/update_status', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ task_id: taskId, new_status: newStatus })
-            }).then(res => res.json()).then(data => { if(data.success) window.location.reload(); });
-        }
-        
+        // 🌟 NAYA: Purane Native HTML5 Functions Delete aur SortableJS Initialization Add
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hum saari ".sortable-task-list" nikalenge aur unhe draggable banayenge
+            document.querySelectorAll('.sortable-task-list').forEach(list => {
+                Sortable.create(list, {
+                    group: 'kanban-board', // Group same hone se cards doosri list me ja sakte hain
+                    animation: 150, // Card slide animation milliseconds me
+                    ghostClass: 'sortable-ghost', // Drag karte waqt peeche jo shadow class banti hai
+                    
+                    onEnd: function (evt) {
+                        const itemEl = evt.item;
+                        const toList = evt.to;
+                        const taskId = itemEl.getAttribute('data-id');
+                        const newStatus = toList.getAttribute('data-status');
+
+                        // Check karo ki card asal me doosri list me gaya hai ya usi list me wapas aa gaya
+                        if (evt.from !== evt.to) {
+                            checkAndCelebrate(newStatus); // Agar Done me gaya to confetti fire karega
+                            
+                            // Backend ko silent API call bhejo
+                            fetch('/update_status', {
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ task_id: taskId, new_status: newStatus })
+                            }).then(res => res.json()).then(data => { 
+                                // Iske baad Socket.IO board update sambhal lega
+                            }).catch(err => console.error(err));
+                        }
+                    }
+                });
+            });
+        });
+
         const searchInput = document.getElementById('live-search');
         searchInput.addEventListener('input', function() {
             const searchText = this.value.toLowerCase();
@@ -787,6 +812,46 @@
                 const meta = card.querySelector('.task-meta').innerText.toLowerCase();
                 card.style.display = (title.includes(searchText) || meta.includes(searchText)) ? 'block' : 'none';
             });
+        });
+    </script>
+    
+    <!-- 🌟 Socket.IO Client Library & Smart Data Listener -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        const myUsername = "{{ current_user.display_name or current_user.username.split('@')[0] }}";
+        
+        socket.on('connect', function() {
+            console.log("🟢 Real-Time Duo Workspace Connected!");
+        });
+
+        socket.on('board_changed', function(data) {
+            console.log("🔄 Board updated! Received data:", data);
+            
+            if (data && data.user) {
+                if (data.user === myUsername) {
+                    return; 
+                }
+
+                const alertContainer = document.createElement('div');
+                alertContainer.className = 'flash-container';
+                alertContainer.style.zIndex = '99999'; 
+                
+                alertContainer.innerHTML = `
+                    <div class="flash-alert alert-info" style="border-left-color: #f59e0b; background: #1e293b;">
+                        🔔 <b>${data.user}</b> moved task <b>'${data.task}'</b> to <b>${data.status}</b>! ✨
+                    </div>
+                `;
+                
+                document.body.appendChild(alertContainer);
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2500);
+            } else {
+                setTimeout(() => { window.location.reload(); }, 300);
+            }
         });
     </script>
 </body>
