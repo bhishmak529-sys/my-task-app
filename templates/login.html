@@ -17,8 +17,11 @@
         .pwd-toggle:hover { opacity: 1; }
         .link-text { margin-top: 20px; font-size: 14px; color: #94a3b8; display: block; text-decoration: none; }
         .link-text span { color: #6366f1; font-weight: bold; }
-        .btn-google { background: white; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; padding: 12px; margin-top: 15px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
+        /* 🌟 NAYA: Google Button Styling */
+        .btn-google { background: white; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; padding: 12px; margin-top: 15px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
+        .btn-google:hover { background: #f8fafc; transform: translateY(-2px); }
+
         /* Premium Toast Notification CSS */
         .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .flash-alert { min-width: 250px; padding: 15px 20px; border-radius: 8px; background: #1e293b; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 5px solid #6366f1; animation: slideIn 0.4s ease forwards; font-weight: bold; }
@@ -46,7 +49,6 @@
         <form action="/login" method="POST">
             <div class="input-box">
                 <label>Username</label>
-                <!-- FIX: Changed type to text so any username works -->
                 <input type="text" name="username" placeholder="Enter username or email" required>
             </div>
             
@@ -59,6 +61,7 @@
             <button type="submit" class="btn-submit">Sign In</button>
         </form>
 
+        <!-- 🌟 NAYA: Google Login Button -->
         <a href="/login/google" class="btn-google">
             <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 18px;">
             Continue with Google
