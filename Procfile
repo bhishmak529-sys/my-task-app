@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Authlib
+requests
+cloudinary
+Flask-SocketIO
+APScheduler
+python-dotenv
+gunicorn
+eventlet
