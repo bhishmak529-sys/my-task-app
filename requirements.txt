@@ -9,3 +9,4 @@ APScheduler
 python-dotenv
 gunicorn
 eventlet
+psycopg2-binary
