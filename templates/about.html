@@ -6,27 +6,31 @@
     .accordion-button::after { filter: invert(1); }
     .accordion-button:not(.collapsed) { background-color: #312e81 !important; color: white !important; box-shadow: none; }
     .accordion-button:focus { box-shadow: none; border-color: #6366f1; }
+    
+    /* Fun hover effect on emojis */
+    .emoji-icon { transition: transform 0.2s; display: inline-block; }
+    .accordion-button:hover .emoji-icon { transform: scale(1.3); }
 </style>
 
 <div class="row justify-content-center mt-4">
-    <div class="col-md-8">
+    <div class="col-md-9">
         
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-white fw-bold mb-0">ℹ️ About TaskPro Elite</h2>
-            <a href="/" class="btn fw-bold" style="background: #6366f1; color: white; border: none; padding: 8px 15px; border-radius: 8px;">⬅ Back to Board</a>
+            <h2 class="text-white fw-bold mb-0"><span class="emoji-icon">ℹ️</span> About TaskPro Elite</h2>
+            <a href="/" class="btn fw-bold" style="background: #6366f1; color: white; border: none; padding: 8px 15px; border-radius: 8px; transition: 0.3s;">⬅ Back to Board</a>
         </div>
 
         <!-- Welcome Message Card -->
         <div class="card shadow p-4 border-0 mb-4" style="background: #1e293b; color: white; border-radius: 12px; border-left: 5px solid #10b981 !important;">
-            <h4 class="fw-bold" style="color: #10b981;">Welcome to your Ultimate Productivity Tool! 🚀</h4>
+            <h4 class="fw-bold" style="color: #10b981;">आपका स्मार्ट पर्सनल असिस्टेंट! 🚀</h4>
             <p style="color: #cbd5e1; font-size: 15px; margin-bottom: 0; margin-top: 10px;">
-                TaskPro Elite is an enterprise-grade task management system. This application helps you track your daily tasks, college assignments, and urgent projects. Read the guide below to learn how to utilize the app to its fullest!
+                TaskPro Elite कोई आम टू-डू लिस्ट (To-Do list) नहीं है। यह आपके कॉलेज के असाइनमेंट, डेली काम और ज़रूरी प्रोजेक्ट्स को मज़ेदार तरीके से मैनेज करने का टूल है। नीचे दी गई आसान गाइड पढ़ें और इसके जादुई फीचर्स का इस्तेमाल करना सीखें!
             </p>
         </div>
 
         <!-- How to Use Section (Interactive Accordion) -->
-        <h4 class="text-white mb-3 fw-bold mt-5">📖 How to Use (User Guide)</h4>
+        <h4 class="text-white mb-3 fw-bold mt-5"><span class="emoji-icon">📖</span> इसे कैसे यूज़ करें? (User Guide)</h4>
         
         <div class="accordion shadow-sm" id="helpAccordion" style="border-radius: 12px; overflow: hidden;">
             
@@ -34,13 +38,13 @@
             <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="background: #1e293b; color: white; font-size: 16px;">
-                        🖱️ 1. Kanban Board & Drag-Drop
+                        <span class="emoji-icon me-2">🖱️</span> 1. जादुई ड्रैग एंड ड्रॉप (Drag & Drop)
                     </button>
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
                     <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        When you add a new task from the top form, it automatically goes into the <b>Backlog</b>.<br><br>
-                        👉 <b>Trick:</b> Click and hold any task card to drag and drop it into the <b>To Do</b> or <b>In Progress</b> column. Once completed, drop it into <b>Done</b> and enjoy the celebration 🎉!
+                        जब आप नया काम जोड़ते हैं, तो वह सीधा <b>Backlog</b> में जाता है।<br><br>
+                        👉 <b>Trick:</b> किसी भी टास्क को माउस से पकड़ें (Click & Hold) और उसे खिसका कर <b>To Do</b> या <b>In Progress</b> में डाल दें। जब काम ख़त्म हो जाए, तो उसे <b>Done</b> में डालें और स्क्रीन पर उड़ने वाले पटाखों (Confetti) का मज़ा लें! 🎉
                     </div>
                 </div>
             </div>
@@ -49,45 +53,76 @@
             <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="background: #1e293b; color: white; font-size: 16px;">
-                        📝 2. Sub-tasks & Attachments (Extra Details)
+                        <span class="emoji-icon me-2">📝</span> 2. टास्क की पूरी डिटेल और फाइल्स 
                     </button>
                 </h2>
                 <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
                     <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        <b>Click</b> on any task card! A detailed pop-up will open where you can:<br>
-                        ✅ Write a detailed <b>Description</b> for the task.<br>
-                        ✅ Create a <b>Checklist (Sub-tasks)</b> for smaller steps.<br>
-                        ✅ Upload necessary <b>Images or PDF files</b>, which you can view in full-screen later.
+                        सिर्फ नाम नहीं, काम की पूरी जानकारी रखें! <b>टास्क कार्ड पर क्लिक करें</b>, एक नया पॉप-अप खुलेगा जहाँ आप:<br>
+                        ✅ काम का पूरा <b>Description</b> लिख सकते हैं।<br>
+                        ✅ काम को छोटे हिस्सों में बांटने के लिए <b>Sub-tasks (चेकलिस्ट)</b> बना सकते हैं।<br>
+                        ✅ ज़रूरी <b>Images या PDF फाइल्स</b> अपलोड कर सकते हैं (जो सुरक्षित रूप से क्लाउड पर सेव होती हैं)।
                     </div>
                 </div>
             </div>
 
-            <!-- Guide Item 3 -->
+            <!-- Guide Item 3: NAYA FEATURE -->
             <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" style="background: #1e293b; color: white; font-size: 16px;">
-                        📜 3. Activity Log (History Tracking)
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAnalytics" style="background: #1e293b; color: white; font-size: 16px;">
+                        <span class="emoji-icon me-2">📊</span> 3. नया एनालिटिक्स डैशबोर्ड (Analytics)
                     </button>
                 </h2>
-                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                <div id="collapseAnalytics" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
                     <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        Forgot when you moved your last task?<br>
-                        Click the purple <b>📜 Activity Log</b> button in the top navigation bar. The app silently saves every action with a date and time stamp, allowing you to view your complete audit trail.
+                        देखें कि आप कितने प्रोडक्टिव हैं! ऊपर मेनू में <b>📊 Analytics</b> पर क्लिक करें।<br>
+                        वहाँ आपको <b>Pie Charts</b> और <b>Bar Graphs</b> दिखेंगे जो बताएंगे कि आपके कितने काम पेंडिंग हैं और कितने काम "High Priority" के हैं।
                     </div>
                 </div>
             </div>
 
-            <!-- Guide Item 4 -->
+            <!-- Guide Item 4: NAYA FEATURE -->
             <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" style="background: #1e293b; color: white; font-size: 16px;">
-                        📊 4. Productivity Dashboard & Emails
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCalendar" style="background: #1e293b; color: white; font-size: 16px;">
+                        <span class="emoji-icon me-2">🗓️</span> 4. स्मार्ट कैलेंडर (Calendar View)
                     </button>
                 </h2>
-                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                <div id="collapseCalendar" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
                     <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        👉 <b>Dashboard:</b> Click the 📊 Dashboard button at the top to view visual graphs tracking your productivity.<br>
-                        👉 <b>Smart Emails:</b> If you add a task under the "High Priority" or "Urgent" category, our background bot will instantly send you an email alert!
+                        क्या आपको लिस्ट पसंद नहीं? कोई बात नहीं! ऊपर <b>🗓️ Calendar</b> बटन पर क्लिक करें।<br>
+                        यहाँ आपको अपने सारे काम एक महीने के कैलेंडर में दिखेंगे। आप चाहें तो टास्क को एक तारीख से उठाकर दूसरी तारीख पर <b>Drag & Drop</b> करके उसकी Due Date बदल सकते हैं!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guide Item 5: NAYA FEATURE -->
+            <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTeam" style="background: #1e293b; color: white; font-size: 16px;">
+                        <span class="emoji-icon me-2">🤝</span> 5. टीम वर्क और रियल-टाइम चैट
+                    </button>
+                </h2>
+                <div id="collapseTeam" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        अकेले काम क्यों करना? किसी भी टास्क को खोलें और उसे अपने दोस्तों के साथ <b>Share</b> करें (उनका यूज़रनेम डालकर)।<br>
+                        👉 दोस्त को तुरंत एक <b>Email Alert</b> चला जाएगा!<br>
+                        👉 आप दोनों एक साथ उस टास्क पर <b>चैट (Chat)</b> कर सकते हैं और अगर आपका दोस्त टास्क मूव करेगा, तो आपकी स्क्रीन पर भी वो तुरंत (Real-time) मूव हो जाएगा!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guide Item 6: NAYA FEATURE -->
+            <div class="accordion-item" style="background: #0f172a; border: 1px solid #334155;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseXP" style="background: #1e293b; color: white; font-size: 16px;">
+                        <span class="emoji-icon me-2">🏆</span> 6. पॉइंट्स कमाएं और लेवल अप करें (XP)
+                    </button>
+                </h2>
+                <div id="collapseXP" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        काम करने को हमने एक गेम बना दिया है! हर बार जब आप कोई काम पूरा करके उसे <b>Done</b> में डालते हैं, तो आपको <b>+10 XP</b> पॉइंट्स मिलते हैं।<br>
+                        पॉइंट्स कमाते जाएं और "Novice 🥉" से "Legend 💎" का बैज (Badge) हासिल करें!
                     </div>
                 </div>
             </div>
@@ -96,7 +131,7 @@
 
         <!-- Developer Signature -->
         <div class="text-center mt-5 mb-4" style="color: #64748b; font-size: 14px;">
-            <p>Designed & Developed with ❤️ by <b>Bhishmak</b> <br> A Masterpiece of BCA 2nd Semester</p>
+            <p>Designed & Developed with ❤️ by <b>Bhishmak</b> <br> Powered by Python, Flask & Real-Time Magic ✨</p>
         </div>
 
     </div>
