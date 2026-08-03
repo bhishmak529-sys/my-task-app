@@ -1,6 +1,6 @@
 import os
+# 🌟 NAYA CHANGE 1: Local development ke liye .env file se keys load karna
 from dotenv import load_dotenv
-
 load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, Response
@@ -16,7 +16,6 @@ import smtplib
 from email.mime.text import MIMEText
 import threading
 from authlib.integrations.flask_client import OAuth
-# 🌟 NAYA CHANGE: func ko import kiya hai Analytics ke liye
 from sqlalchemy import text, func  
 from flask_socketio import SocketIO, emit
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -30,7 +29,12 @@ SYSTEM_APP_PASSWORD = "dryd orfy gpnl vfzb"
 
 # 🛡️ SECURITY & CONFIG
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
+
+# 🌟 DATABASE FIX: Handle Render's postgres:// vs postgresql://
+db_url = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -39,6 +43,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # 🌟 Socket.IO Engine
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# ================= GOOGLE OAUTH CONFIG =================
 app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_ID')
 app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_SECRET')
 
@@ -131,7 +136,7 @@ with app.app_context():
 # ================= HELPER FUNCTIONS =================
 def send_notification_email(receiver_email, sender_name, task_name):
     if SYSTEM_EMAIL == "your_actual_email@gmail.com":
-        print("⚠️ Email not sent! Please configure SYSTEM_EMAIL and SYSTEM_APP_PASSWORD in app.py")
+        print("⚠️ Email not sent! Please configure SYSTEM_EMAIL in app.py")
         return
     try:
         msg = MIMEText(f"Hello!\n\n{sender_name} has just shared a task with you on TaskPro Elite.\n\nTask Name: {task_name}\n\nLogin to your dashboard to check it out!\n\nCheers,\nTaskPro Elite Team")
@@ -150,7 +155,14 @@ def send_notification_email(receiver_email, sender_name, task_name):
 # ================= AUTH ROUTES =================
 @app.route('/login/google')
 def google_login():
-    return google.authorize_redirect(url_for('google_authorize', _external=True))
+    redirect_uri = url_for('google_authorize', _external=True)
+    
+    # 🌟 NAYA CHANGE 2: Render HTTPS Proxy Fix
+    if redirect_uri.startswith('http://') and 'onrender.com' in redirect_uri:
+        redirect_uri = redirect_uri.replace('http://', 'https://', 1)
+        print(f"Forcefully secured Redirect URI: {redirect_uri}")
+        
+    return google.authorize_redirect(redirect_uri)
 
 @app.route('/login/google/authorize')
 def google_authorize():
@@ -259,7 +271,7 @@ def change_password():
     flash("Security Alert: Password changed successfully! 🔒", "success")
     return redirect(url_for('home'))
 
-# ================= MAIN ROUTES (WITH FILTERS) =================
+# ================= MAIN ROUTES =================
 @app.route("/")
 @login_required
 def home():
@@ -497,7 +509,7 @@ def add_comment(tid):
             return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= COLLABORATORS ROUTES (WITH EMAIL) =================
+# ================= COLLABORATORS ROUTES =================
 @app.route("/share_task", methods=["POST"])
 @login_required
 def share_task():
@@ -513,7 +525,6 @@ def share_task():
                 db.session.commit()
                 socketio.emit('board_changed', {'user': 'System', 'task': task.name, 'status': f"Shared with {friend.username}"})
                 
-                # 🌟 TRIGGER EMAIL IN BACKGROUND
                 sender_display = current_user.display_name if current_user.display_name else current_user.username
                 email_thread = threading.Thread(target=send_notification_email, args=(friend.username, sender_display, task.name))
                 email_thread.start()
@@ -542,7 +553,7 @@ def remove_collaborator(tid, uid):
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= EXPORT & DASHBOARD =================
+# ================= DASHBOARD & EXPORT =================
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -591,30 +602,6 @@ def export_tasks():
     output.seek(0)
     return Response(output.getvalue(), mimetype="text/csv", headers={"Content-disposition": "attachment; filename=TaskPro_Elite_Backup.csv"})
 
-@app.route("/upload_attachment/<int:tid>", methods=["POST"])
-@login_required
-def upload_attachment(tid):
-    task = Task.query.get(tid)
-    if not task or (task.user_id != current_user.id and current_user not in task.collaborators):
-        return redirect(url_for('home'))
-    for file in request.files.getlist('task_file'):
-        if file and file.filename != '':
-            unique_filename = f"task_{tid}_{secrets.token_hex(4)}_{secure_filename(file.filename)}"
-            if not os.path.exists(app.config['UPLOAD_FOLDER']): os.makedirs(app.config['UPLOAD_FOLDER'])
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-            db.session.add(Attachment(file_path=f"/static/uploads/{unique_filename}", task_id=tid))
-    db.session.commit()
-    return redirect(url_for('home'))
-
-@app.route("/remove_attachment/<int:aid>", methods=["POST"])
-@login_required
-def remove_attachment(aid):
-    attachment = Attachment.query.get(aid)
-    if attachment and (attachment.task.user_id == current_user.id or current_user in attachment.task.collaborators):
-        db.session.delete(attachment)
-        db.session.commit()
-    return redirect(url_for('home'))
-
 # ================= CALENDAR ROUTES =================
 @app.route("/calendar")
 @login_required
@@ -642,80 +629,54 @@ def get_calendar_events():
             except Exception as e: pass
     return jsonify(events)
 
-@app.route("/api/update_calendar_date", methods=["POST"])
-@login_required
-def update_calendar_date():
-    data = request.get_json()
-    task = Task.query.get(data.get('task_id'))
-    
-    if task and (task.user_id == current_user.id or current_user in task.collaborators):
-        try:
-            date_obj = datetime.strptime(data.get('new_date'), '%Y-%m-%d')
-            formatted_date = date_obj.strftime('%d %b %Y')
-            task.due_date = formatted_date
-            db.session.commit()
-            return jsonify({"success": True})
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)})
-    return jsonify({"success": False})
-
-# ================= 🌟 NAYA FEATURE: ANALYTICS DASHBOARD =================🌟
+# ================= ANALYTICS DASHBOARD =================
 @app.route("/analytics")
 @login_required
 def analytics():
-    # 1. Database se Status ke hisaab se Tasks count karna (Group By)
     status_counts = db.session.query(Task.status, func.count(Task.id)).filter_by(user_id=current_user.id).group_by(Task.status).all()
     status_dict = {status: count for status, count in status_counts}
 
-    # 2. Database se Priority ke hisaab se Tasks count karna (Group By)
     priority_counts = db.session.query(Task.priority, func.count(Task.id)).filter_by(user_id=current_user.id).group_by(Task.priority).all()
     priority_dict = {priority: count for priority, count in priority_counts}
 
     final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
-    
-    # Data ko analytics.html mein bhejna
-    return render_template("analytics.html", 
-                           user_name=final_name, 
-                           status_dict=status_dict, 
-                           priority_dict=priority_dict)
+    return render_template("analytics.html", user_name=final_name, status_dict=status_dict, priority_dict=priority_dict)
 
 
 # ================= AUTOMATED SCHEDULER & BRIEFING =================
 def daily_morning_briefing():
     with app.app_context():
         print("\n🔔 [SCHEDULER WOKE UP]: Checking database for tasks due today...")
-        
-        # Aaj ki date nikalna (IST Timezone adjustment ke sath)
         today_str = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime('%d %b %Y')
         users = User.query.all()
         
         for user in users:
-            due_tasks = Task.query.filter_by(user_id=user.id, due_date=today_str).filter(Task.status != 'Done').all()
-            
-            if due_tasks:
-                if SYSTEM_EMAIL == "task.manage.0@gmail.com" and SYSTEM_APP_PASSWORD == "dryd orfy gpnl vfzb":
-                    # Maine tumhara original password rehne diya hai, par ise private rakhna!
-                    pass
+            # 🌟 NAYA CHANGE 3: Email Validation Guard (ffwc fix)
+            if user.username and '@' in user.username and '.' in user.username:
+                due_tasks = Task.query.filter_by(user_id=user.id, due_date=today_str).filter(Task.status != 'Done').all()
                 
-                try:
-                    task_list_text = "\n".join([f"- {t.name} (Priority: {t.priority})" for t in due_tasks])
-                    display_name = user.display_name if user.display_name else user.username.split('@')[0]
-                    
-                    email_body = f"Good Morning {display_name}!\n\nHere is your daily briefing from TaskPro Elite. You have the following tasks due today:\n\n{task_list_text}\n\nLogin to your dashboard to complete them.\n\nHave a productive day!\n- TaskPro Elite AI"
-                    
-                    msg = MIMEText(email_body, 'plain')
-                    msg['Subject'] = f"📅 Today's Agenda: {len(due_tasks)} Tasks Due"
-                    msg['From'] = SYSTEM_EMAIL
-                    msg['To'] = user.username
-                    
-                    server = smtplib.SMTP('smtp.gmail.com', 587)
-                    server.starttls()
-                    server.login(SYSTEM_EMAIL, SYSTEM_APP_PASSWORD)
-                    server.send_message(msg)
-                    server.quit()
-                    print(f"✅ Daily Briefing email sent to {user.username}")
-                except Exception as e:
-                    print(f"❌ Failed to send briefing to {user.username}: {e}")
+                if due_tasks:
+                    try:
+                        task_list_text = "\n".join([f"- {t.name} (Priority: {t.priority})" for t in due_tasks])
+                        display_name = user.display_name if user.display_name else user.username.split('@')[0]
+                        
+                        email_body = f"Good Morning {display_name}!\n\nHere is your daily briefing from TaskPro Elite. You have the following tasks due today:\n\n{task_list_text}\n\nLogin to your dashboard to complete them.\n\nHave a productive day!\n- TaskPro Elite AI"
+                        
+                        msg = MIMEText(email_body, 'plain')
+                        msg['Subject'] = f"📅 Today's Agenda: {len(due_tasks)} Tasks Due"
+                        msg['From'] = SYSTEM_EMAIL
+                        msg['To'] = user.username
+                        
+                        server = smtplib.SMTP('smtp.gmail.com', 587)
+                        server.starttls()
+                        server.login(SYSTEM_EMAIL, SYSTEM_APP_PASSWORD)
+                        server.send_message(msg)
+                        server.quit()
+                        print(f"✅ Daily Briefing email sent to {user.username}")
+                    except Exception as e:
+                        print(f"❌ Failed to send briefing to {user.username}: {e}")
+            else:
+                print(f"⚠️ Skipped invalid/fake email: {user.username}")
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=daily_morning_briefing, trigger="interval", minutes=1)
