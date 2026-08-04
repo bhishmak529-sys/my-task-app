@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix # 🌟 FIX: Render par HTTPS proxy error rokne ke liye
 from datetime import datetime, timedelta
 import secrets
 import csv
@@ -22,6 +23,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 
 app = Flask(__name__)
+
+# 🌟 FIX: Render par HTTPS/Redirect errors ko theek karne ke liye ProxyFix apply kiya
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # ================= EMAIL CREDENTIALS =================
 SYSTEM_EMAIL = "task.manage.0@gmail.com" 
@@ -43,17 +47,15 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # 🌟 Socket.IO Engine
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ================= GOOGLE OAUTH CONFIG =================
-app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_ID')
-app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_SECRET')
-
 db = SQLAlchemy(app)
 oauth = OAuth(app)
 
+# ================= 🚨 GOOGLE OAUTH CONFIG (THE FIX) 🚨 =================
+# Yahan hum direct os.getenv use kar rahe hain taaki koi mismatch na ho
 google = oauth.register(
     name='google',
-    client_id=app.config['GOOGLE_CLIENT_ID'],
-    client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+    client_id=os.getenv('GOOGLE_ID'),          # Render par key ka naam GOOGLE_ID hona chahiye
+    client_secret=os.getenv('GOOGLE_SECRET'),  # Render par key ka naam GOOGLE_SECRET hona chahiye
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
