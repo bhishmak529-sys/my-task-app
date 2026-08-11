@@ -1,5 +1,4 @@
 import os
-# 🌟 NAYA CHANGE 1: Local development ke liye .env file se keys load karna
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -8,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from werkzeug.middleware.proxy_fix import ProxyFix # 🌟 FIX: Render par HTTPS proxy error rokne ke liye
+from werkzeug.middleware.proxy_fix import ProxyFix 
 from datetime import datetime, timedelta
 import secrets
 import csv
@@ -34,7 +33,7 @@ SYSTEM_APP_PASSWORD = "dryd orfy gpnl vfzb"
 # 🛡️ SECURITY & CONFIG
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
 
-# 🌟 DATABASE FIX: Handle Render's postgres:// vs postgresql://
+# 🌟 DATABASE FIX: Handle Render/Neon postgres:// vs postgresql://
 db_url = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -50,12 +49,11 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 db = SQLAlchemy(app)
 oauth = OAuth(app)
 
-# ================= 🚨 GOOGLE OAUTH CONFIG (THE FIX) 🚨 =================
-# Yahan hum direct os.getenv use kar rahe hain taaki koi mismatch na ho
+# ================= GOOGLE OAUTH CONFIG =================
 google = oauth.register(
     name='google',
-    client_id=os.getenv('GOOGLE_ID'),          # Render par key ka naam GOOGLE_ID hona chahiye
-    client_secret=os.getenv('GOOGLE_SECRET'),  # Render par key ka naam GOOGLE_SECRET hona chahiye
+    client_id=os.getenv('GOOGLE_ID'),          
+    client_secret=os.getenv('GOOGLE_SECRET'),  
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
@@ -159,7 +157,6 @@ def send_notification_email(receiver_email, sender_name, task_name):
 def google_login():
     redirect_uri = url_for('google_authorize', _external=True)
     
-    # 🌟 NAYA CHANGE 2: Render HTTPS Proxy Fix
     if redirect_uri.startswith('http://') and 'onrender.com' in redirect_uri:
         redirect_uri = redirect_uri.replace('http://', 'https://', 1)
         print(f"Forcefully secured Redirect URI: {redirect_uri}")
@@ -527,11 +524,14 @@ def share_task():
                 db.session.commit()
                 socketio.emit('board_changed', {'user': 'System', 'task': task.name, 'status': f"Shared with {friend.username}"})
                 
-                sender_display = current_user.display_name if current_user.display_name else current_user.username
-                email_thread = threading.Thread(target=send_notification_email, args=(friend.username, sender_display, task.name))
+                sender_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+                notification_msg = f"New Task Shared! {sender_name} assigned you '{task.name}'."
+                socketio.emit('notify_user', {'msg': notification_msg})
+
+                email_thread = threading.Thread(target=send_notification_email, args=(friend.username, sender_name, task.name))
                 email_thread.start()
 
-                return jsonify({"success": True, "message": "Task shared & Email sent! 🤝📧"})
+                return jsonify({"success": True, "message": "Task shared & Notification sent! 🔔"})
             return jsonify({"success": False, "message": "Already shared!"})
         return jsonify({"success": False, "message": "User not found!"})
     return jsonify({"success": False, "message": "Unauthorized."})
@@ -554,6 +554,53 @@ def remove_collaborator(tid, uid):
         db.session.commit()
         return jsonify({"success": True})
     return jsonify({"success": False})
+
+# ================= ATTACHMENTS (FILE UPLOAD) ROUTES =================
+@app.route("/upload_attachment/<int:tid>", methods=["POST"])
+@login_required
+def upload_attachment(tid):
+    task = Task.query.get(tid)
+    if not task or (task.user_id != current_user.id and current_user not in task.collaborators):
+        return redirect(url_for('home'))
+
+    files = request.files.getlist('task_file')
+    for file in files:
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            unique_filename = f"task_{tid}_{secrets.token_hex(4)}_{filename}"
+            
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
+                
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            file.save(file_path)
+            
+            new_attachment = Attachment(file_path=f"/static/uploads/{unique_filename}", task_id=tid)
+            db.session.add(new_attachment)
+            
+    db.session.add(ActivityLog(description=f"Uploaded file(s) to task '{task.name}'", user_id=current_user.id))
+    db.session.commit()
+    flash("File(s) uploaded successfully! 📎", "success")
+    return redirect(url_for('home'))
+
+@app.route("/remove_attachment/<int:aid>", methods=["POST"])
+@login_required
+def remove_attachment(aid):
+    attachment = Attachment.query.get(aid)
+    if attachment and (attachment.task.user_id == current_user.id or current_user in attachment.task.collaborators):
+        try:
+            base_dir = os.path.abspath(os.path.dirname(__file__))
+            file_path = os.path.join(base_dir, attachment.file_path.lstrip('/'))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print("Could not remove file from OS:", e)
+            
+        db.session.delete(attachment)
+        db.session.commit()
+        flash("Attachment deleted! 🗑️", "success")
+        
+    return redirect(url_for('home'))
 
 # ================= DASHBOARD & EXPORT =================
 @app.route("/dashboard")
@@ -653,7 +700,6 @@ def daily_morning_briefing():
         users = User.query.all()
         
         for user in users:
-            # 🌟 NAYA CHANGE 3: Email Validation Guard (ffwc fix)
             if user.username and '@' in user.username and '.' in user.username:
                 due_tasks = Task.query.filter_by(user_id=user.id, due_date=today_str).filter(Task.status != 'Done').all()
                 
