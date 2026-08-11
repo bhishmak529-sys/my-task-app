@@ -727,7 +727,8 @@ def daily_morning_briefing():
                 print(f"⚠️ Skipped invalid/fake email: {user.username}")
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=daily_morning_briefing, trigger="interval", minutes=1)
+# 🌟 PERFORMANCE FIX: Runs only once a day at 8:00 AM instead of every minute
+scheduler.add_job(func=daily_morning_briefing, trigger="cron", hour=8, minute=0)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
