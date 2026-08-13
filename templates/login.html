@@ -3,35 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskPro Elite - Login</title>
+    <title>Login - TaskPro Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 100%; max-width: 400px; text-align: center; }
-        h2 { margin-bottom: 25px; font-size: 28px; font-weight: bold; color: #6366f1; }
-        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 15px; margin-bottom: 20px; text-align: left; position: relative; }
-        label { font-size: 11px; color: #94a3b8; font-weight: bold; display: block; }
-        input { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; margin-top: 5px; }
-        .btn-submit { background: #6366f1; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-submit:hover { background: #4f46e5; }
-        .pwd-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
-        .pwd-toggle:hover { opacity: 1; }
-        .link-text { margin-top: 20px; font-size: 14px; color: #94a3b8; display: block; text-decoration: none; }
-        .link-text span { color: #6366f1; font-weight: bold; }
-        
-        /* 🌟 NAYA: Google Button Styling */
-        .btn-google { background: white; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; padding: 12px; margin-top: 15px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
-        .btn-google:hover { background: #f8fafc; transform: translateY(-2px); }
+        /* 🎨 PREMIUM MUTED ELEGANCE PALETTE */
+        :root {
+            --color-1: #191D23; /* Deep Charcoal */
+            --color-2: #57707A; /* Muted Teal */
+            --color-3: #7E919F; /* Slate Blue */
+            --color-4: #979DAB; /* Lavender Grey */
+            --color-5: #C5BAC4; /* Dusty Mauve */
+            --color-6: #DEDCDC; /* Off-White */
+        }
 
-        /* Premium Toast Notification CSS */
-        .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .flash-alert { min-width: 250px; padding: 15px 20px; border-radius: 8px; background: #1e293b; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 5px solid #6366f1; animation: slideIn 0.4s ease forwards; font-weight: bold; }
-        .alert-success { border-left-color: #10b981; }
-        .alert-error { border-left-color: #ef4444; }
-        .alert-info { border-left-color: #3b82f6; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        body {
+            /* Soft gradient background for depth */
+            background: linear-gradient(135deg, var(--color-2), var(--color-1));
+            color: var(--color-6);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .auth-card {
+            background-color: var(--color-1);
+            padding: 45px 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(25, 29, 35, 0.8);
+            border: 1px solid rgba(126, 145, 159, 0.15); /* Subtle slate border */
+            box-sizing: border-box;
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 35px;
+            color: var(--color-5); /* Dusty Mauve for an elegant title */
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--color-4);
+            letter-spacing: 0.3px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            background-color: rgba(87, 112, 122, 0.08); /* Very subtle tint */
+            border: 1px solid var(--color-3);
+            border-radius: 10px;
+            color: var(--color-6);
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .input-field::placeholder {
+            color: rgba(151, 157, 171, 0.5); /* Faded color-4 */
+        }
+
+        .input-field:focus {
+            border-color: var(--color-5);
+            box-shadow: 0 0 0 3px rgba(197, 186, 196, 0.15);
+            background-color: rgba(87, 112, 122, 0.12);
+        }
+
+        .pwd-toggle-eye {
+            position: absolute;
+            right: 15px;
+            top: 40px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.2s;
+            color: var(--color-6);
+        }
+        .pwd-toggle-eye:hover { 
+            opacity: 1; 
+            color: var(--color-5); 
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--color-5); /* Dusty Mauve Action Button */
+            color: var(--color-1); /* Dark text for contrast */
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(197, 186, 196, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(222, 220, 220, 0.3);
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 14px;
+            background-color: transparent;
+            color: var(--color-6);
+            border: 1px solid var(--color-3);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-google:hover {
+            background-color: rgba(126, 145, 159, 0.15);
+            border-color: var(--color-4);
+        }
+
+        .btn-google img {
+            width: 18px;
+        }
+
+        .redirect-link {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 13px;
+            color: var(--color-4);
+        }
+
+        .redirect-link a {
+            color: var(--color-3);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s;
+            margin-left: 5px;
+        }
+
+        .redirect-link a:hover {
+            color: var(--color-5);
+            text-decoration: underline;
+        }
+
+        .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .flash-alert { 
+            padding: 15px 20px; 
+            border-radius: 10px; 
+            background: var(--color-1); 
+            color: var(--color-6); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
+            border-left: 4px solid var(--color-5); 
+            margin-bottom: 10px; 
+            font-weight: 600; 
+            font-size: 14px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
     </style>
 </head>
 <body>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-container" id="fc">
@@ -43,43 +197,43 @@
       {% endif %}
     {% endwith %}
 
-    <div class="login-card">
-        <h2>Login to TaskPro Elite 🚀</h2>
+    <div class="auth-card">
+        <h2>Login to TaskPro Elite</h2>
         
         <form action="/login" method="POST">
-            <div class="input-box">
-                <label>Username</label>
-                <input type="text" name="username" placeholder="Enter username or email" required>
+            <div class="input-group">
+                <label>Username or Email</label>
+                <input type="text" name="username" class="input-field" placeholder="Enter your username" required>
             </div>
             
-            <div class="input-box">
+            <div class="input-group">
                 <label>Password</label>
-                <input type="password" id="login_password" name="password" placeholder="••••••••" required>
-                <span class="pwd-toggle" onclick="toggleLoginPassword()">👁️</span>
+                <input type="password" name="password" id="pwd-input" class="input-field" placeholder="••••••••" required>
+                <span class="pwd-toggle-eye" onclick="togglePwd()">👁️</span>
             </div>
             
-            <button type="submit" class="btn-submit">Sign In</button>
+            <button type="submit" class="btn-primary">Sign In</button>
         </form>
 
-        <!-- 🌟 NAYA: Google Login Button -->
-        <a href="/login/google" class="btn-google">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 18px;">
-            Continue with Google
+        <a href="/login/google" style="text-decoration: none;">
+            <button class="btn-google">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                Continue with Google
+            </button>
         </a>
 
-        <a href="/register" class="link-text">Don't have an account? <span>Register ➔</span></a>
+        <div class="redirect-link">
+            Don't have an account? <a href="/register">Register</a>
+        </div>
     </div>
 
     <script>
-        function toggleLoginPassword() {
-            const pwdField = document.getElementById('login_password');
-            const eyeIcon = event.target;
-            if (pwdField.type === "password") {
-                pwdField.type = "text";
-                eyeIcon.innerText = "🙈";
+        function togglePwd() {
+            const pwd = document.getElementById('pwd-input');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
             } else {
-                pwdField.type = "password";
-                eyeIcon.innerText = "👁️";
+                pwd.type = 'password';
             }
         }
     </script>
