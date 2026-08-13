@@ -3,95 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security - TaskPro Elite</title>
+    <title>Security Settings - TaskPro Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 100%; max-width: 450px; text-align: center; position: relative; }
-        h2 { margin-bottom: 25px; font-size: 28px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 15px; margin-bottom: 20px; text-align: left; position: relative; transition: 0.3s; }
-        label { font-size: 11px; color: #94a3b8; font-weight: bold; display: block; }
-        input { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; margin-top: 5px; }
-        .btn-submit { background: #ef4444; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-submit:hover { background: #dc2626; }
-        .pwd-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
-        .pwd-toggle:hover { opacity: 1; }
-        .back-btn { position: absolute; top: 30px; left: 30px; color: #94a3b8; text-decoration: none; font-size: 16px; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 5px; background: #0f172a; padding: 8px 15px; border-radius: 8px; border: 1px solid #334155; }
-        .back-btn:hover { color: white; background: #334155; }
-        .inline-error { color: #ef4444; font-size: 12px; margin-top: -15px; margin-bottom: 15px; text-align: left; font-weight: bold; }
+        /* 🎨 PREMIUM DARK SLATE PALETTE (From your 6-color image) */
+        :root {
+            --c-1: #06141B; /* Deepest Background */
+            --c-2: #11212D; /* Card Background */
+            --c-3: #253745; /* Inputs & Borders */
+            --c-4: #4A5C6A; /* Accent / Button */
+            --c-5: #9BA8AB; /* Secondary Text */
+            --c-6: #CCD0CF; /* Primary Text / Highlights */
+        }
+
+        body {
+            background-color: var(--c-1);
+            color: var(--c-6);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background-color: transparent;
+            color: var(--c-5);
+            border: 1px solid var(--c-3);
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background-color: var(--c-3);
+            color: var(--c-6);
+        }
+
+        .security-card {
+            background-color: var(--c-2);
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid var(--c-3);
+        }
+
+        .header-text {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header-text h2 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+            color: var(--c-6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header-text p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--c-5);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--c-5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 15px;
+            background-color: var(--c-1); /* Darker inner background */
+            border: 1px solid var(--c-3);
+            border-radius: 8px;
+            color: var(--c-6);
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .input-field::placeholder {
+            color: var(--c-4);
+        }
+
+        .input-field:focus {
+            border-color: var(--c-5);
+            box-shadow: 0 0 0 2px rgba(155, 168, 171, 0.15);
+        }
+
+        .pwd-toggle-eye {
+            position: absolute;
+            right: 15px;
+            top: 38px;
+            cursor: pointer;
+            color: var(--c-4);
+            transition: 0.2s;
+            font-size: 16px;
+            user-select: none;
+        }
+
+        .pwd-toggle-eye:hover {
+            color: var(--c-6);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--c-4); /* Sleek slate blue button */
+            color: var(--c-1); /* Deep dark text for contrast */
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--c-6); /* Highlight color on hover */
+            transform: translateY(-2px);
+        }
+        
+        .flash-container {
+            margin-bottom: 20px;
+        }
+
+        .flash-alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: rgba(255, 107, 107, 0.1);
+            border-left: 4px solid #ff6b6b;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
-    <!-- Back to Dashboard/Board Button -->
     <a href="/" class="back-btn">← Back to Board</a>
 
-    <div class="login-card">
-        <h2 style="margin-top: 0;">🔒 Security Settings</h2>
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 30px;">Update your password to keep your account secure.</p>
+    <div class="security-card">
+        <div class="header-text">
+            <h2>🔒 Security Settings</h2>
+            <p>Update your password to keep your account secure.</p>
+        </div>
         
-        <form action="/change_password" method="POST" onsubmit="return validatePasswords(event)">
-            
-            <!-- Box 1: Current Password -->
-            <div class="input-box" style="border-color: {% if old_err %}#ef4444{% else %}#334155{% endif %};">
-                <label>Current Password</label>
-                <input type="password" id="old_pw" name="old_password" placeholder="Enter current password" required>
-                <span class="pwd-toggle" onclick="toggleVis('old_pw', this)">👁️</span>
-            </div>
+        <div class="flash-container">
             {% if old_err %}
-                <p class="inline-error">❌ {{ old_err }}</p>
+                <div class="flash-alert">{{ old_err }}</div>
             {% endif %}
+            {% if new_err %}
+                <div class="flash-alert">{{ new_err }}</div>
+            {% endif %}
+        </div>
 
-            <!-- Box 2: New Password -->
-            <div class="input-box" style="border-color: {% if new_err %}#ef4444{% else %}#334155{% endif %};">
+        <form action="/change_password" method="POST">
+            <div class="input-group">
+                <label>Current Password</label>
+                <input type="password" name="old_password" id="pwd1" class="input-field" placeholder="Enter current password" required>
+                <span class="pwd-toggle-eye" onclick="togglePwd('pwd1')">👁️</span>
+            </div>
+
+            <div class="input-group">
                 <label>New Password</label>
-                <input type="password" id="new_pw" name="new_password" placeholder="Create new password" required oninput="checkMatch()">
-                <span class="pwd-toggle" onclick="toggleVis('new_pw', this)">👁️</span>
+                <input type="password" name="new_password" id="pwd2" class="input-field" placeholder="Create new password" required>
+                <span class="pwd-toggle-eye" onclick="togglePwd('pwd2')">👁️</span>
             </div>
 
-            <!-- Box 3: Confirm New Password -->
-            <div class="input-box" style="border-color: {% if new_err %}#ef4444{% else %}#334155{% endif %};">
+            <div class="input-group">
                 <label>Confirm New Password</label>
-                <input type="password" id="conf_pw" name="confirm_password" placeholder="Repeat new password" required oninput="checkMatch()">
-                <span class="pwd-toggle" onclick="toggleVis('conf_pw', this)">👁️</span>
+                <input type="password" name="confirm_password" id="pwd3" class="input-field" placeholder="Repeat new password" required>
+                <span class="pwd-toggle-eye" onclick="togglePwd('pwd3')">👁️</span>
             </div>
-            
-            <!-- LIVE JS MATCH ERROR -->
-            <p id="js_match_err" class="inline-error" style="display: {% if new_err %}block{% else %}none{% endif %};">
-                ❌ {% if new_err %}{{ new_err }}{% else %}Passwords do not match!{% endif %}
-            </p>
 
-            <button type="submit" class="btn-submit">Update Password</button>
+            <button type="submit" class="btn-primary">Update Password</button>
         </form>
     </div>
 
     <script>
-        // 👁️ Show/Hide Password Logic
-        function toggleVis(fieldId, eyeBtn) {
-            const field = document.getElementById(fieldId);
-            if (field.type === "password") { field.type = "text"; eyeBtn.innerText = "🙈"; } 
-            else { field.type = "password"; eyeBtn.innerText = "👁️"; }
-        }
-
-        // Live typing check for Password Matching
-        function checkMatch() {
-            const p1 = document.getElementById('new_pw').value;
-            const p2 = document.getElementById('conf_pw').value;
-            const err = document.getElementById('js_match_err');
-            if (p2.length > 0 && p1 !== p2) {
-                err.style.display = 'block';
-                err.innerText = "❌ Passwords do not match!";
+        function togglePwd(id) {
+            const pwd = document.getElementById(id);
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
             } else {
-                err.style.display = 'none';
-            }
-        }
-
-        // Prevent form submission if passwords are wrong
-        function validatePasswords(e) {
-            const p1 = document.getElementById('new_pw').value;
-            const p2 = document.getElementById('conf_pw').value;
-            if (p1 !== p2) {
-                e.preventDefault();
-                document.getElementById('js_match_err').style.display = 'block';
-                document.getElementById('js_match_err').innerText = "❌ Passwords do not match!";
+                pwd.type = 'password';
             }
         }
     </script>
