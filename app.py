@@ -20,10 +20,11 @@ from sqlalchemy import text, func
 from flask_socketio import SocketIO, emit
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+from fpdf import FPDF
 
 app = Flask(__name__)
 
-# 🌟 FIX: Render par HTTPS/Redirect errors ko theek karne ke liye ProxyFix apply kiya
+# Render par HTTPS/Redirect errors ko theek karne ke liye ProxyFix apply kiya
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # ================= EMAIL CREDENTIALS =================
@@ -33,7 +34,7 @@ SYSTEM_APP_PASSWORD = "dryd orfy gpnl vfzb"
 # 🛡️ SECURITY & CONFIG
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
 
-# 🌟 DATABASE FIX: Handle Render/Neon postgres:// vs postgresql://
+# DATABASE FIX: Handle Render/Neon postgres:// vs postgresql://
 db_url = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -43,7 +44,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# 🌟 Socket.IO Engine
+# Socket.IO Engine
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 db = SQLAlchemy(app)
@@ -156,11 +157,8 @@ def send_notification_email(receiver_email, sender_name, task_name):
 @app.route('/login/google')
 def google_login():
     redirect_uri = url_for('google_authorize', _external=True)
-    
     if redirect_uri.startswith('http://') and 'onrender.com' in redirect_uri:
         redirect_uri = redirect_uri.replace('http://', 'https://', 1)
-        print(f"Forcefully secured Redirect URI: {redirect_uri}")
-        
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/login/google/authorize')
@@ -255,7 +253,6 @@ def change_password():
     
     if not check_password_hash(current_user.password, old_pw):
         old_err = "Incorrect current password!"
-        
     if new_pw != confirm_pw:
         new_err = "New passwords do not match!"
     elif len(new_pw) < 4:
@@ -338,7 +335,6 @@ def add_task():
         
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': name, 'status': 'Backlog'})
-        
         flash(f"New task '{name}' added successfully! ✅", "success")
     return redirect(url_for('home'))
 
@@ -362,7 +358,6 @@ def move_task(tid, new_status):
         
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': task.status})
-        
     return redirect(url_for('home'))
 
 @app.route("/update_status", methods=["POST"])
@@ -386,7 +381,6 @@ def update_status():
         
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': task.status})
-        
         return jsonify({"success": True})
     return jsonify({"success": False})
 
@@ -407,7 +401,6 @@ def edit_task(tid):
         
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': "Updated"})
-        
         flash("Task updated! 📝", "info")
         return redirect(url_for('home'))
     return render_template("edit.html", task=task)
@@ -424,7 +417,6 @@ def delete_task(tid):
         
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task_name, 'status': "Deleted"})
-        
         flash("Task deleted permanently! 🗑️", "success")
     return redirect(url_for('home'))
 
@@ -439,7 +431,7 @@ def save_description():
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-# ================= SUB-TASKS & COMMENTS =================
+# ================= SUB-TASKS & DEDICATED CHAT =================
 @app.route("/get_subtasks/<int:tid>")
 @login_required
 def get_subtasks(tid):
@@ -481,19 +473,18 @@ def delete_subtask(sid):
         return jsonify({"success": True})
     return jsonify({"success": False})
 
-@app.route("/get_comments/<int:tid>")
+@app.route("/chat/<int:tid>")
 @login_required
-def get_comments(tid):
+def chat_room(tid):
     task = Task.query.get(tid)
-    if task and (task.user_id == current_user.id or current_user in task.collaborators):
-        comments = Comment.query.filter_by(task_id=tid).order_by(Comment.timestamp.asc()).all()
-        return jsonify([{
-            "id": c.id, 
-            "text": c.text, 
-            "username": c.user.display_name if c.user.display_name else c.user.username.split('@')[0], 
-            "time": c.timestamp.strftime('%I:%M %p')
-        } for c in comments])
-    return jsonify([])
+    if not task or (task.user_id != current_user.id and current_user not in task.collaborators):
+        flash("Unauthorized access to chat.", "error")
+        return redirect(url_for('home'))
+        
+    comments = Comment.query.filter_by(task_id=tid).order_by(Comment.timestamp.asc()).all()
+    final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+    
+    return render_template("chat.html", task=task, comments=comments, current_username=final_name)
 
 @app.route("/add_comment/<int:tid>", methods=["POST"])
 @login_required
@@ -505,6 +496,17 @@ def add_comment(tid):
             new_comment = Comment(text=text, task_id=tid, user_id=current_user.id)
             db.session.add(new_comment)
             db.session.commit()
+            
+            # LIVE CHAT BROADCAST WITH CORRECT USER ID
+            sender_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+            chat_data = {
+                "task_id": tid,
+                "text": text,
+                "username": sender_name,
+                "user_id": current_user.id,
+                "time": new_comment.timestamp.strftime('%I:%M %p')
+            }
+            socketio.emit('new_chat_message', chat_data)
             return jsonify({"success": True})
     return jsonify({"success": False})
 
@@ -651,6 +653,43 @@ def export_tasks():
     output.seek(0)
     return Response(output.getvalue(), mimetype="text/csv", headers={"Content-disposition": "attachment; filename=TaskPro_Elite_Backup.csv"})
 
+@app.route("/export/pdf")
+@login_required
+def export_pdf():
+    my_tasks = Task.query.filter_by(user_id=current_user.id).all()
+    user_tasks = list(set(my_tasks + current_user.shared_tasks.all()))
+
+    pdf = FPDF()
+    pdf.add_page()
+    
+    pdf.set_font("Arial", 'B', 16)
+    final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
+    pdf.cell(200, 10, txt=f"TaskPro Elite - Board Report for {final_name}", ln=True, align='C')
+    pdf.ln(10)
+
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(60, 10, 'Task Name', 1)
+    pdf.cell(30, 10, 'Category', 1)
+    pdf.cell(30, 10, 'Priority', 1)
+    pdf.cell(30, 10, 'Status', 1)
+    pdf.cell(40, 10, 'Due Date', 1)
+    pdf.ln()
+
+    pdf.set_font("Arial", '', 9)
+    for t in user_tasks:
+        task_name = (t.name[:35] + '..') if len(t.name) > 35 else t.name
+        due = t.due_date if t.due_date else "No Date"
+        
+        pdf.cell(60, 10, str(task_name), 1)
+        pdf.cell(30, 10, str(t.category), 1)
+        pdf.cell(30, 10, str(t.priority), 1)
+        pdf.cell(30, 10, str(t.status), 1)
+        pdf.cell(40, 10, str(due), 1)
+        pdf.ln()
+
+    pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    return Response(pdf_bytes, mimetype="application/pdf", headers={"Content-disposition": "attachment; filename=TaskPro_Report.pdf"})
+
 # ================= CALENDAR ROUTES =================
 @app.route("/calendar")
 @login_required
@@ -691,8 +730,7 @@ def analytics():
     final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
     return render_template("analytics.html", user_name=final_name, status_dict=status_dict, priority_dict=priority_dict)
 
-
-# ================= AUTOMATED SCHEDULER & BRIEFING =================
+# ================= AUTOMATED SCHEDULER =================
 def daily_morning_briefing():
     with app.app_context():
         print("\n🔔 [SCHEDULER WOKE UP]: Checking database for tasks due today...")
@@ -723,11 +761,8 @@ def daily_morning_briefing():
                         print(f"✅ Daily Briefing email sent to {user.username}")
                     except Exception as e:
                         print(f"❌ Failed to send briefing to {user.username}: {e}")
-            else:
-                print(f"⚠️ Skipped invalid/fake email: {user.username}")
 
 scheduler = BackgroundScheduler()
-# 🌟 PERFORMANCE FIX: Runs only once a day at 8:00 AM instead of every minute
 scheduler.add_job(func=daily_morning_briefing, trigger="cron", hour=8, minute=0)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
