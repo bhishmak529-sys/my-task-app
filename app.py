@@ -35,7 +35,7 @@ SYSTEM_APP_PASSWORD = "dryd orfy gpnl vfzb"
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
 
 # DATABASE FIX: Handle Render/Neon postgres:// vs postgresql://
-db_url = os.getenv('DATABASE_URL', 'sqlite:///trello_board_final.db')
+db_url = os.getenv('DATABASE_URL', 'sqlite:///taskpro_live_production.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
