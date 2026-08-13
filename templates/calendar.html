@@ -3,54 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskPro Elite - Premium Calendar</title>
-    <!-- FullCalendar CDN -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-    
+    <title>Creator's Calendar - TaskPro Elite</title>
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <style>
-        /* 🎨 Base Styling */
-        body { background: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        /* 🎨 THE NEW EARTHY MINIMALIST PALETTE (Matched perfectly to index.html) */
+        :root { 
+            --primary-light: #8b9fa0;
+            --primary-dark: #5e716a;
+            --bg-neutral: #eceae4;
+            --card-neutral: #dccfba;
+            --accent-color: #a0785d;
+            --text-color: #373737;
+            --white: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-neutral);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .header-bar {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-bar h1 {
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            color: var(--text-color);
+            font-size: 32px;
+        }
+
+        .back-btn {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        /* 🗓️ PREMIUM CALENDAR WRAPPER */
+        .calendar-wrapper {
+            background: var(--white);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--primary-light);
+        }
+
+        /* OVERRIDING FULLCALENDAR CSS TO MATCH THEME */
+        .fc-theme-standard td, .fc-theme-standard th {
+            border-color: var(--primary-light);
+        }
+        .fc-col-header-cell {
+            background: var(--card-neutral);
+            padding: 15px 0;
+            color: var(--text-color);
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+        .fc-daygrid-day-number {
+            color: var(--text-color);
+            font-weight: 600;
+            padding: 10px !important;
+            text-decoration: none !important;
+        }
+        .fc-day-today {
+            background-color: #f7f5f0 !important; /* Extremely light tint for today */
+        }
+        .fc-toolbar-title {
+            color: var(--text-color) !important;
+            font-family: 'Playfair Display', serif !important;
+            font-size: 28px !important;
+        }
+        .fc-button-primary {
+            background-color: var(--primary-light) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            text-transform: capitalize !important;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 600 !important;
+            padding: 8px 16px !important;
+            transition: 0.3s ease !important;
+            color: var(--white) !important;
+        }
+        .fc-button-primary:hover, .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: var(--primary-dark) !important;
+            color: var(--white) !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+        }
         
-        /* 🎨 Top Navigation */
-        .top-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1050px; margin: 0 auto 20px auto; }
-        .back-btn { background: #6366f1; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
-        .back-btn:hover { background: #4f46e5; transform: translateY(-2px); }
-        
-        /* 🎨 Premium Calendar Container */
-        .calendar-container { background: #1e293b; padding: 25px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 15px 40px rgba(0,0,0,0.4); max-width: 1050px; margin: 0 auto; }
-        
-        /* 🎨 Toolbar (Header & Buttons) */
-        .fc .fc-toolbar-title { font-size: 1.6em; font-weight: 800; color: #f8fafc; letter-spacing: 0.5px; }
-        .fc .fc-button-primary { background-color: #6366f1 !important; border-color: #6366f1 !important; border-radius: 8px !important; font-weight: 600 !important; text-transform: capitalize !important; padding: 8px 16px !important; transition: all 0.3s ease !important; }
-        .fc .fc-button-primary:hover { background-color: #4f46e5 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4) !important; }
-        .fc .fc-button-active { background-color: #4338ca !important; border-color: #4338ca !important; }
-        
-        /* 🎨 Grid & Cells (Softer Lines) */
-        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
-        .fc-theme-standard .fc-scrollgrid { border-radius: 12px; overflow: hidden; border: 1px solid #334155 !important; }
-        .fc-col-header-cell-cushion { color: #94a3b8 !important; font-weight: 700; padding: 12px 0 !important; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;}
-        
-        /* 🎨 Day Numbers & 'Today' Highlight Fix */
-        .fc-daygrid-day-number { color: #cbd5e1 !important; font-weight: 600; padding: 8px 12px !important; transition: 0.2s; text-decoration: none !important; }
-        .fc-daygrid-day-number:hover { color: #6366f1 !important; transform: scale(1.1); }
-        .fc .fc-day-today { background: rgba(99, 102, 241, 0.15) !important; } 
-        
-        /* 🎨 Events (Tasks) Styling */
-        .fc-event { border-radius: 6px !important; padding: 4px 8px !important; font-size: 12px !important; font-weight: 700 !important; border: none !important; box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important; transition: all 0.2s ease !important; cursor: grab; }
-        .fc-event:active { cursor: grabbing !important; } /* Drag karte waqt cursor change hoga */
-        .fc-event:hover { transform: scale(1.03); filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important; }
+        /* Event Cards */
+        .fc-event {
+            border: none !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            font-family: 'Inter', sans-serif !important;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .fc-event:hover {
+            transform: scale(1.02);
+            filter: brightness(0.9);
+        }
     </style>
 </head>
 <body>
 
-    <div class="top-nav">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <h1 style="margin: 0;">Creator's Calendar 🗓️</h1>
-        </div>
+    <div class="header-bar">
+        <h1>Creator's Calendar 🗓️</h1>
         <a href="/" class="back-btn">← Back to Board</a>
     </div>
 
-    <div class="calendar-container">
+    <div class="calendar-wrapper">
         <div id='calendar'></div>
     </div>
 
@@ -64,46 +150,19 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek'
                 },
+                height: 800,
                 events: '/api/calendar_events',
-                
-                // 🌟 DRAG AND DROP ENABLED 🌟
-                editable: true,
-                droppable: true,
-                
-                // 🌟 EVENT DROP LOGIC (Background API Call) 🌟
-                eventDrop: function(info) {
-                    const taskId = info.event.id;
-                    const newDate = info.event.startStr; 
-                    
-                    fetch('/api/update_calendar_date', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            task_id: taskId,
-                            new_date: newDate
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.success) {
-                            alert("Oops! Could not save the new date. Maybe you don't have permission.");
-                            info.revert(); 
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert("Network error! Could not connect to the server.");
-                        info.revert();
-                    });
-                },
-
-                // 🌟 CLICK TO GO BACK TO BOARD 🌟
-                eventClick: function(info) {
-                    info.jsEvent.preventDefault();
-                    if (info.event.url) {
-                        window.location.href = info.event.url;
+                eventDidMount: function(info) {
+                    // Match the elegant theme colors
+                    if(info.event.extendedProps.status === 'Done') {
+                        info.el.style.backgroundColor = 'var(--primary-light)'; 
+                        info.el.style.color = 'var(--white)';
+                    } else if (info.event.extendedProps.priority === 'High') {
+                        info.el.style.backgroundColor = 'var(--accent-color)'; 
+                        info.el.style.color = 'var(--white)';
+                    } else {
+                        info.el.style.backgroundColor = 'var(--primary-dark)'; 
+                        info.el.style.color = 'var(--white)';
                     }
                 }
             });
