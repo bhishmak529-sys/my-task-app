@@ -1,195 +1,302 @@
-{% extends "base.html" %}
-{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Documentation - TaskPro Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 🎨 LIGHT NAUTICAL PALETTE */
+        :root {
+            --c-white: #F5FEFF;
+            --c-blue-light: #AAC0E1;
+            --c-blue-dark: #0E2F76;
+        }
 
-<style>
-    /* Premium Dark Theme Accordion Styling */
-    .accordion-button::after { filter: invert(1); }
-    .accordion-button:not(.collapsed) { 
-        background-color: #3730a3 !important; 
-        color: white !important; 
-        box-shadow: none; 
-    }
-    .accordion-button {
-        background: #1e293b;
-        color: #f8fafc;
-        border: none;
-        transition: all 0.3s ease;
-    }
-    .accordion-button:focus { box-shadow: none; border-color: #6366f1; }
-    .accordion-item {
-        background: #0f172a; 
-        border: 1px solid #334155;
-        border-radius: 12px !important;
-        margin-bottom: 15px;
-        overflow: hidden;
-    }
-    .feature-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 35px;
-        height: 35px;
-        border-radius: 8px;
-        background: rgba(99, 102, 241, 0.15);
-        color: #818cf8;
-        margin-right: 15px;
-        font-size: 18px;
-    }
-    .feature-list-custom {
-        list-style: none;
-        padding-left: 0;
-        margin-top: 15px;
-    }
-    .feature-list-custom li {
-        position: relative;
-        padding-left: 25px;
-        margin-bottom: 10px;
-        color: #cbd5e1;
-    }
-    .feature-list-custom li::before {
-        content: '✓';
-        position: absolute;
-        left: 0;
-        color: #10b981;
-        font-weight: bold;
-    }
-</style>
+        body {
+            background-color: var(--c-white);
+            color: var(--c-blue-dark);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-<div class="row justify-content-center mt-4 mb-5">
-    <div class="col-md-10">
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--c-blue-dark);
+        }
+
+        .back-btn {
+            background-color: var(--c-blue-light);
+            color: var(--c-blue-dark);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .back-btn:hover {
+            background-color: var(--c-blue-dark);
+            color: var(--c-white);
+        }
+
+        .welcome-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(170, 192, 225, 0.4);
+            border-left: 6px solid var(--c-blue-light);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(14, 47, 118, 0.05);
+        }
+
+        .welcome-card h2 {
+            color: var(--c-blue-dark);
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .welcome-card p {
+            line-height: 1.7;
+            color: rgba(14, 47, 118, 0.85);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--c-blue-dark);
+        }
+
+        /* 🌟 UPGRADED SMOOTH ACCORDION STYLES 🌟 */
+        .accordion-item {
+            margin-bottom: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(14, 47, 118, 0.05);
+            border: 1px solid rgba(170, 192, 225, 0.3);
+            background: rgba(170, 192, 225, 0.15); 
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .accordion-item.active {
+            background: var(--c-blue-dark);
+            box-shadow: 0 8px 20px rgba(14, 47, 118, 0.15);
+            border-color: var(--c-blue-dark);
+        }
+
+        .accordion-header {
+            padding: 20px;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            color: var(--c-blue-dark);
+            transition: color 0.3s ease, background 0.3s ease;
+            user-select: none;
+        }
+
+        .accordion-header:hover {
+            background: rgba(170, 192, 225, 0.2);
+        }
+
+        .accordion-item.active .accordion-header {
+            color: var(--c-white);
+            background: transparent;
+            border-bottom: 1px solid rgba(245, 254, 255, 0.1);
+        }
+
+        /* The Secret to Smooth Sliding */
+        .accordion-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            padding: 0 20px; /* Zero vertical padding when closed */
+            background: rgba(0, 0, 0, 0.15);
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out, padding 0.4s ease-in-out;
+        }
+
+        /* When active, expand height and opacity */
+        .accordion-item.active .accordion-content {
+            max-height: 800px; /* Large enough to hold the content */
+            opacity: 1;
+            padding: 20px 20px 25px 20px; /* Restore vertical padding */
+        }
+
+        .accordion-content p {
+            color: var(--c-blue-light);
+            margin-top: 0;
+            line-height: 1.6;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .check-list { list-style: none; padding: 0; margin: 0; }
+        .check-list li { color: var(--c-white); margin-bottom: 15px; font-size: 13.5px; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+        .check-list li span { color: var(--c-blue-light); font-weight: bold; font-size: 16px; }
+
+        .toggle-icon {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            font-size: 18px;
+        }
+        .accordion-item.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Platform Documentation</h1>
+            <a href="/" class="back-btn">← Back to Workspace</a>
+        </div>
+
+        <div class="welcome-card">
+            <h2>Welcome to TaskPro Elite</h2>
+            <p>TaskPro Elite is a highly optimized, real-time productivity workspace designed for professionals and students. Engineered to streamline your workflow, it combines agile Kanban methodologies with seamless cloud synchronization, ensuring you never miss a deadline. Review the comprehensive guide below to maximize your efficiency.</p>
+        </div>
+
+        <div class="section-title">
+            📖 Comprehensive User Guide
+        </div>
+
+        <!-- ACCORDION ITEM 1 -->
+        <div class="accordion-item active">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                🚀 1. Agile Kanban Workspace
+                <span class="toggle-icon">⌄</span>
+            </div>
+            <div class="accordion-content">
+                <p>The core of TaskPro Elite is built around an intuitive, drag-and-drop Kanban board.</p>
+                <ul class="check-list">
+                    <li><span>✓</span> <div><strong>Task Lifecycle:</strong> New entries default to the Backlog. Click, hold, and drag cards across To Do, In Progress, and Done stages to reflect real-time status.</div></li>
+                    <li><span>✓</span> <div><strong>Smart Filtering:</strong> Utilize the top navigation bar to instantly filter your workspace by Category (Work, Personal, Urgent) or Priority levels.</div></li>
+                    <li><span>✓</span> <div><strong>Visual Indicators:</strong> Cards automatically highlight to visually warn you when critical deadlines are approaching.</div></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ACCORDION ITEM 2 -->
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                📁 2. Task Architecture & Cloud Media
+                <span class="toggle-icon">⌄</span>
+            </div>
+            <div class="accordion-content">
+                <p>Attach vital resources directly to your workflows.</p>
+                <ul class="check-list">
+                    <li><span>✓</span> <div><strong>File Attachments:</strong> Upload images, documents, and reference materials directly into task cards.</div></li>
+                    <li><span>✓</span> <div><strong>Horizontal Media Gallery:</strong> View your task images seamlessly through an optimized, sideways-scrolling image gallery right inside the modal.</div></li>
+                </ul>
+            </div>
+        </div>
         
-        <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-white fw-bold mb-0">Platform Documentation</h2>
-            <a href="/" class="btn fw-bold" style="background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; transition: 0.3s; box-shadow: 0 4px 10px rgba(99,102,241,0.3);">⬅ Back to Workspace</a>
+        <!-- ACCORDION ITEM 3 -->
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                🤝 3. Real-Time Collaboration Ecosystem
+                <span class="toggle-icon">⌄</span>
+            </div>
+            <div class="accordion-content">
+                <p>Work seamlessly with your team using high-speed WebSockets.</p>
+                <ul class="check-list">
+                    <li><span>✓</span> <div><strong>Live Task Movement:</strong> When a team member updates or moves a task, your screen syncs instantly without ever needing to refresh.</div></li>
+                    <li><span>✓</span> <div><strong>Live Chat Room:</strong> Click on any task to enter its dedicated discussion room and chat instantly with collaborators to keep ideas flowing.</div></li>
+                </ul>
+            </div>
         </div>
 
-        <!-- Executive Summary Card -->
-        <div class="card shadow p-4 border-0 mb-5" style="background: #1e293b; color: white; border-radius: 16px; border-left: 6px solid #6366f1 !important;">
-            <h4 class="fw-bold" style="color: #818cf8;">Welcome to TaskPro Elite</h4>
-            <p style="color: #cbd5e1; font-size: 16px; margin-bottom: 0; margin-top: 12px; line-height: 1.6;">
-                TaskPro Elite is a highly optimized, real-time productivity workspace designed for professionals and students. Engineered to streamline your workflow, it combines agile Kanban methodologies with seamless cloud synchronization, ensuring you never miss a deadline. Please review the comprehensive guide below to maximize your efficiency.
-            </p>
+        <!-- 🌟 BRAND NEW ITEM 4 🌟 -->
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                📊 4. Data Export & Reporting
+                <span class="toggle-icon">⌄</span>
+            </div>
+            <div class="accordion-content">
+                <p>Generate professional reports instantly for offline access or record-keeping.</p>
+                <ul class="check-list">
+                    <li><span>✓</span> <div><strong>Dynamic PDF Export:</strong> Download a beautifully formatted, print-ready PDF report of your current board status with just one click.</div></li>
+                    <li><span>✓</span> <div><strong>CSV Backup:</strong> Export all your tasks and descriptions into an Excel/CSV format for deep data analysis or safekeeping.</div></li>
+                </ul>
+            </div>
         </div>
 
-        <!-- Comprehensive User Guide -->
-        <h4 class="text-white mb-4 fw-bold">📖 Comprehensive User Guide</h4>
-        
-        <div class="accordion shadow-sm" id="helpAccordion">
-            
-            <!-- Module 1: Agile Workspace -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moduleOne">
-                        <span class="feature-icon">🚀</span> 1. Agile Kanban Workspace
-                    </button>
-                </h2>
-                <div id="moduleOne" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.7;">
-                        The core of TaskPro Elite is built around an intuitive, drag-and-drop Kanban board. 
-                        <ul class="feature-list-custom">
-                            <li><strong>Task Lifecycle:</strong> New entries default to the <em>Backlog</em>. Click, hold, and drag cards across <em>To Do</em>, <em>In Progress</em>, and <em>Done</em> stages to reflect real-time status.</li>
-                            <li><strong>Smart Filtering:</strong> Utilize the top navigation bar to instantly filter your workspace by Category (Work, Personal, Urgent) or Priority levels.</li>
-                            <li><strong>Visual Indicators:</strong> Cards automatically highlight in red (Overdue) or amber (Due Soon) to ensure critical deadlines are met.</li>
-                        </ul>
-                    </div>
-                </div>
+        <!-- 🌟 BRAND NEW ITEM 5 🌟 -->
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                🔒 5. Advanced Security & Access
+                <span class="toggle-icon">⌄</span>
             </div>
-
-            <!-- Module 2: Deep Task Architecture -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moduleTwo">
-                        <span class="feature-icon">📂</span> 2. Task Architecture & Cloud Media
-                    </button>
-                </h2>
-                <div id="moduleTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.7;">
-                        Clicking on any task card opens its dedicated detailed view, transforming a simple to-do item into a comprehensive project hub.
-                        <ul class="feature-list-custom">
-                            <li><strong>Descriptions & Notes:</strong> Add extensive details, URLs, or meeting notes to your task.</li>
-                            <li><strong>Sub-Task Delegation:</strong> Break complex tasks into manageable checklists. Monitor completion directly from the main card.</li>
-                            <li><strong>Cloudinary Integration:</strong> Securely upload project files, PDFs, and high-resolution images. All media is hosted dynamically on secure cloud servers.</li>
-                        </ul>
-                    </div>
-                </div>
+            <div class="accordion-content">
+                <p>Your workflow data is protected with enterprise-level security measures.</p>
+                <ul class="check-list">
+                    <li><span>✓</span> <div><strong>Google OAuth 2.0:</strong> Skip password creation entirely. Use secure, one-click sign-in via your existing Google Account.</div></li>
+                    <li><span>✓</span> <div><strong>Encrypted Passwords:</strong> For standard accounts, all passwords are salted and hashed using modern PBKDF2 encryption before hitting the database.</div></li>
+                </ul>
             </div>
-
-            <!-- Module 3: Team Collaboration -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moduleThree">
-                        <span class="feature-icon">🤝</span> 3. Real-Time Collaboration Ecosystem
-                    </button>
-                </h2>
-                <div id="moduleThree" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.7;">
-                        TaskPro Elite eliminates the need for manual page refreshes during team efforts.
-                        <ul class="feature-list-custom">
-                            <li><strong>Instant Sharing:</strong> Invite colleagues via their registered username. The system automatically dispatches an encrypted email notification to them.</li>
-                            <li><strong>WebSocket Synchronization:</strong> When a collaborator moves a task or updates a status, the changes reflect on your screen instantaneously via Socket.IO technology.</li>
-                            <li><strong>Integrated Discussion Threads:</strong> Utilize the in-task chat interface to communicate contextually with your team regarding specific deliverables.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Module 4: Analytics & Tracking -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moduleFour">
-                        <span class="feature-icon">📈</span> 4. Advanced Analytics & Calendar
-                    </button>
-                </h2>
-                <div id="moduleFour" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.7;">
-                        Maintain absolute control over your schedule and productivity metrics.
-                        <ul class="feature-list-custom">
-                            <li><strong>Data Dashboard:</strong> Access the <em>Analytics</em> section to view dynamically generated Chart.js graphs detailing your task distribution by status and priority.</li>
-                            <li><strong>Interactive Calendar:</strong> Switch to the <em>Calendar View</em> to manage monthly deliverables. Drag and drop tasks directly on the calendar grid to modify their deadlines.</li>
-                            <li><strong>Activity Audit Log:</strong> A tamper-proof history log records every action (edits, deletions, status changes) with precise timestamps for complete transparency.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Module 5: Automation & Gamification -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moduleFive">
-                        <span class="feature-icon">⚙️</span> 5. Automation & Gamification
-                    </button>
-                </h2>
-                <div id="moduleFive" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
-                    <div class="accordion-body" style="color: #94a3b8; font-size: 15px; line-height: 1.7;">
-                        <ul class="feature-list-custom">
-                            <li><strong>Automated Morning Briefings:</strong> Our APScheduler background worker scans your database daily and delivers a personalized email summarizing your pending tasks for the day.</li>
-                            <li><strong>XP & Ranking System:</strong> Productivity is rewarded. Earn +10 XP for every task completed. Ascend through the ranks from <em>Novice 🥉</em> to the prestigious <em>Legend 💎</em> tier.</li>
-                            <li><strong>Data Portability:</strong> Export your entire workspace into a structured CSV format with a single click for local backups.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
-        <!-- Developer Signature & Tech Stack -->
-        <div class="mt-5 pt-4" style="border-top: 1px solid #334155;">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div style="color: #64748b; font-size: 13px;">
-                    <p class="mb-1"><strong>TaskPro Elite v1.0.0</strong> - Enterprise Task Management</p>
-                    <p class="mb-0">Engineered by a BCA scholar at Himachal Pradesh University.</p>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <span class="badge" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155;">Python 3</span>
-                    <span class="badge" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155;">Flask Framework</span>
-                    <span class="badge" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155;">PostgreSQL</span>
-                    <span class="badge" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155;">Socket.IO</span>
-                </div>
+        <!-- 🌟 BRAND NEW ITEM 6 🌟 -->
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                ✨ 6. Premium Aesthetic Optimization
+                <span class="toggle-icon">⌄</span>
+            </div>
+            <div class="accordion-content">
+                <p>A workspace should be a joy to look at. We crafted a UI that reduces eye strain.</p>
+                <ul class="check-list">
+                    <li><span>✓</span> <div><strong>Muted Elegance Theme:</strong> Enjoy a sophisticated color palette designed to look professional, calm, and perfectly balanced.</div></li>
+                    <li><span>✓</span> <div><strong>Creator's Calendar:</strong> View all your deadlines in a beautiful grid layout that syncs effortlessly with your main board.</div></li>
+                </ul>
             </div>
         </div>
 
     </div>
-</div>
 
-{% endblock %}
+    <!-- THE JAVASCRIPT ENGINE -->
+    <script>
+        function toggleAccordion(clickedHeader) {
+            const currentItem = clickedHeader.parentElement;
+            const allItems = document.querySelectorAll('.accordion-item');
+            
+            // Close other items smoothly
+            allItems.forEach(item => {
+                if (item !== currentItem) {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Toggle the clicked one
+            currentItem.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
