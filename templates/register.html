@@ -3,54 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskPro Elite - Register</title>
+    <title>Register - TaskPro Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 100%; max-width: 400px; text-align: center; }
-        h2 { margin-bottom: 25px; font-size: 28px; font-weight: bold; color: #10b981; }
-        .input-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 15px; margin-bottom: 20px; text-align: left; position: relative; }
-        label { font-size: 11px; color: #94a3b8; font-weight: bold; display: block; }
-        input { width: 85%; background: transparent; border: none; color: white; font-size: 16px; outline: none; margin-top: 5px; }
-        .btn-submit { background: #10b981; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-submit:hover { background: #059669; }
-        .pwd-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-30%); cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
-        .pwd-toggle:hover { opacity: 1; }
-        .link-text { margin-top: 20px; font-size: 14px; color: #94a3b8; display: block; text-decoration: none; }
-        .link-text span { color: #10b981; font-weight: bold; }
+        /* 🎨 PREMIUM MUTED ELEGANCE PALETTE */
+        :root {
+            --color-1: #191D23; 
+            --color-2: #57707A; 
+            --color-3: #7E919F; 
+            --color-4: #979DAB; 
+            --color-5: #C5BAC4; 
+            --color-6: #DEDCDC; 
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--color-2), var(--color-1));
+            color: var(--color-6);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .auth-card {
+            background-color: var(--color-1);
+            padding: 45px 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(25, 29, 35, 0.8);
+            border: 1px solid rgba(126, 145, 159, 0.15);
+            box-sizing: border-box;
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 35px;
+            color: var(--color-5);
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--color-4);
+            letter-spacing: 0.3px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            background-color: rgba(87, 112, 122, 0.08);
+            border: 1px solid var(--color-3);
+            border-radius: 10px;
+            color: var(--color-6);
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .input-field::placeholder {
+            color: rgba(151, 157, 171, 0.5);
+        }
+
+        .input-field:focus {
+            border-color: var(--color-5);
+            box-shadow: 0 0 0 3px rgba(197, 186, 196, 0.15);
+            background-color: rgba(87, 112, 122, 0.12);
+        }
+
+        .pwd-toggle-eye {
+            position: absolute;
+            right: 15px;
+            top: 40px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.2s;
+            color: var(--color-6);
+        }
+        .pwd-toggle-eye:hover { 
+            opacity: 1; 
+            color: var(--color-5); 
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--color-5);
+            color: var(--color-1);
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(197, 186, 196, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(222, 220, 220, 0.3);
+        }
+
+        .redirect-link {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 13px;
+            color: var(--color-4);
+        }
+
+        .redirect-link a {
+            color: var(--color-3);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s;
+            margin-left: 5px;
+        }
+
+        .redirect-link a:hover {
+            color: var(--color-5);
+            text-decoration: underline;
+        }
+
+        .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .flash-alert { 
+            padding: 15px 20px; 
+            border-radius: 10px; 
+            background: var(--color-1); 
+            color: var(--color-6); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
+            border-left: 4px solid var(--color-5); 
+            margin-bottom: 10px; 
+            font-weight: 600; 
+            font-size: 14px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <h2 style="color: #10b981;">Create Account 🚀</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container" id="fc">
+        {% for category, message in messages %}
+          <div class="flash-alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+        <script> setTimeout(() => { document.getElementById('fc').style.display='none'; }, 3500); </script>
+      {% endif %}
+    {% endwith %}
+
+    <div class="auth-card">
+        <h2>Create an Account</h2>
         
         <form action="/register" method="POST">
-            <div class="input-box">
+            <div class="input-group">
                 <label>Choose a Username</label>
-                <input type="text" name="username" placeholder="e.g. bhishmak_123" required>
+                <input type="text" name="username" class="input-field" placeholder="Enter a unique username" required>
             </div>
             
-            <div class="input-box">
-                <label>Create Password</label>
-                <input type="password" id="reg_password" name="password" placeholder="••••••••" required>
-                <span class="pwd-toggle" onclick="toggleRegPassword()">👁️</span>
+            <div class="input-group">
+                <label>Create a Password</label>
+                <input type="password" name="password" id="pwd-input" class="input-field" placeholder="••••••••" required>
+                <span class="pwd-toggle-eye" onclick="togglePwd()">👁️</span>
             </div>
             
-            <button type="submit" class="btn-submit">Sign Up</button>
+            <button type="submit" class="btn-primary">Register Now</button>
         </form>
 
-        <a href="/login" class="link-text">Already have an account? <span style="color: #10b981;">Login ➔</span></a>
+        <div class="redirect-link">
+            Already have an account? <a href="/login">Login</a>
+        </div>
     </div>
 
     <script>
-        function toggleRegPassword() {
-            const pwdField = document.getElementById('reg_password');
-            const eyeIcon = event.target;
-            if (pwdField.type === "password") {
-                pwdField.type = "text";
-                eyeIcon.innerText = "🙈";
+        function togglePwd() {
+            const pwd = document.getElementById('pwd-input');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
             } else {
-                pwdField.type = "password";
-                eyeIcon.innerText = "👁️";
+                pwd.type = 'password';
             }
         }
     </script>
