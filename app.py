@@ -131,6 +131,7 @@ class Task(db.Model):
     date_created = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     collaborators = db.relationship('User', secondary=task_collaborators, backref=db.backref('shared_tasks', lazy='dynamic'))
 
+# 🌟 DATABASE CREATION TRIGGER FOR RENDER 🌟
 with app.app_context():
     db.create_all()
 
