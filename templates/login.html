@@ -1,241 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - TaskPro Elite</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* 🎨 PREMIUM MUTED ELEGANCE PALETTE */
-        :root {
-            --color-1: #191D23; /* Deep Charcoal */
-            --color-2: #57707A; /* Muted Teal */
-            --color-3: #7E919F; /* Slate Blue */
-            --color-4: #979DAB; /* Lavender Grey */
-            --color-5: #C5BAC4; /* Dusty Mauve */
-            --color-6: #DEDCDC; /* Off-White */
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 🔍 Google Search Console Verification Tag -->
+  <meta name="google-site-verification" content="NI8xvjDzD_SSRkfPfkjl1SH-cowkERT9cvhxeZgCR7g" />
+  <title>Login | TaskPro Elite</title>
 
-        body {
-            /* Soft gradient background for depth */
-            background: linear-gradient(135deg, var(--color-2), var(--color-1));
-            color: var(--color-6);
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-        .auth-card {
-            background-color: var(--color-1);
-            padding: 45px 40px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 50px rgba(25, 29, 35, 0.8);
-            border: 1px solid rgba(126, 145, 159, 0.15); /* Subtle slate border */
-            box-sizing: border-box;
-        }
+  <style>
+    /* 🎨 CUSTOM 5-COLOR EARTHY LUXE PALETTE */
+    :root {
+      --c-black: #0C0E12;
+      --c-surface: #15181E;
+      --c-surface-card: rgba(21, 24, 30, 0.92);
+      --c-slate: #9FB2BD;
+      --c-sage: #CAD4CB;
+      --c-cream: #EADBCC;
+      --c-gold: #BFA054;
+      --c-gold-hover: #AC8E43;
+      --c-border: rgba(159, 178, 189, 0.18);
+    }
 
-        .auth-card h2 {
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 35px;
-            color: var(--color-5); /* Dusty Mauve for an elegant title */
-            letter-spacing: 0.5px;
-            font-weight: 700;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        .input-group {
-            margin-bottom: 22px;
-            position: relative;
-        }
+    body {
+      min-height: 100vh;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      color: var(--c-cream);
+      background-color: var(--c-black);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(191, 160, 84, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(159, 178, 189, 0.10) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(202, 212, 203, 0.04) 0%, transparent 60%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
 
-        .input-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--color-4);
-            letter-spacing: 0.3px;
-        }
+    .login-card {
+      width: min(1120px, 100%);
+      min-height: 640px;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 36px;
+      padding: 16px;
+      background: var(--c-surface-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--c-border);
+      border-radius: 24px;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65);
+    }
 
-        .input-field {
-            width: 100%;
-            padding: 15px;
-            background-color: rgba(87, 112, 122, 0.08); /* Very subtle tint */
-            border: 1px solid var(--color-3);
-            border-radius: 10px;
-            color: var(--color-6);
-            font-size: 14px;
-            outline: none;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-        }
+    /* ================= LEFT SHOWCASE SLIDER ================= */
+    .showcase-container {
+      position: relative;
+      overflow: hidden;
+      min-height: 600px;
+      border-radius: 18px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid rgba(234, 218, 204, 0.1);
+    }
 
-        .input-field::placeholder {
-            color: rgba(151, 157, 171, 0.5); /* Faded color-4 */
-        }
+    .slide {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 1s ease-in-out, transform 1.2s ease-in-out;
+      transform: scale(1.04);
+      z-index: 0;
+    }
 
-        .input-field:focus {
-            border-color: var(--color-5);
-            box-shadow: 0 0 0 3px rgba(197, 186, 196, 0.15);
-            background-color: rgba(87, 112, 122, 0.12);
-        }
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+    }
 
-        .pwd-toggle-eye {
-            position: absolute;
-            right: 15px;
-            top: 40px;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: 0.2s;
-            color: var(--color-6);
-        }
-        .pwd-toggle-eye:hover { 
-            opacity: 1; 
-            color: var(--color-5); 
-        }
+    .slide::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(12, 14, 18, 0.45) 0%, rgba(12, 14, 18, 0.94) 100%);
+    }
 
-        .btn-primary {
-            width: 100%;
-            padding: 15px;
-            background-color: var(--color-5); /* Dusty Mauve Action Button */
-            color: var(--color-1); /* Dark text for contrast */
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-            margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(197, 186, 196, 0.2);
-        }
+    .brand {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: var(--c-cream);
+    }
 
-        .btn-primary:hover {
-            background-color: var(--color-6);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(222, 220, 220, 0.3);
-        }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--c-cream), var(--c-gold));
+      color: var(--c-black);
+      box-shadow: 0 8px 20px rgba(191, 160, 84, 0.35);
+      font-size: 16px;
+      font-weight: 800;
+    }
 
-        .btn-google {
-            width: 100%;
-            padding: 14px;
-            background-color: transparent;
-            color: var(--color-6);
-            border: 1px solid var(--color-3);
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
+    .showcase-content {
+      position: relative;
+      z-index: 2;
+      max-width: 430px;
+      padding-bottom: 8px;
+    }
 
-        .btn-google:hover {
-            background-color: rgba(126, 145, 159, 0.15);
-            border-color: var(--color-4);
-        }
+    .tag {
+      display: inline-flex;
+      margin-bottom: 16px;
+      padding: 6px 14px;
+      border: 1px solid rgba(191, 160, 84, 0.35);
+      border-radius: 999px;
+      color: var(--c-gold);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(12, 14, 18, 0.6);
+      backdrop-filter: blur(6px);
+    }
 
-        .btn-google img {
-            width: 18px;
-        }
+    .slide-text {
+      display: none;
+      animation: fadeInText 0.6s ease forwards;
+    }
 
-        .redirect-link {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 13px;
-            color: var(--color-4);
-        }
+    .slide-text.active {
+      display: block;
+    }
 
-        .redirect-link a {
-            color: var(--color-3);
-            text-decoration: none;
-            font-weight: 700;
-            transition: color 0.2s;
-            margin-left: 5px;
-        }
+    .showcase-content h1 {
+      font-size: clamp(32px, 3.8vw, 44px);
+      line-height: 1.12;
+      letter-spacing: -1.2px;
+      font-weight: 800;
+      color: var(--c-cream);
+      margin-bottom: 14px;
+    }
 
-        .redirect-link a:hover {
-            color: var(--color-5);
-            text-decoration: underline;
-        }
+    .showcase-content p {
+      color: var(--c-sage);
+      line-height: 1.6;
+      font-size: 14.5px;
+    }
 
-        .flash-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .flash-alert { 
-            padding: 15px 20px; 
-            border-radius: 10px; 
-            background: var(--color-1); 
-            color: var(--color-6); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
-            border-left: 4px solid var(--color-5); 
-            margin-bottom: 10px; 
-            font-weight: 600; 
-            font-size: 14px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            border-right: 1px solid rgba(255,255,255,0.05);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-    </style>
+    .progress {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .progress span {
+      height: 4px;
+      width: 28px;
+      border-radius: 10px;
+      background: rgba(202, 212, 203, 0.25);
+      transition: all 0.4s ease;
+      cursor: pointer;
+    }
+
+    .progress span.active {
+      background: var(--c-gold);
+      width: 48px;
+    }
+
+    /* ================= RIGHT LOGIN PANEL ================= */
+    .login-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 28px;
+    }
+
+    .login-content {
+      width: min(400px, 100%);
+    }
+
+    .welcome-label {
+      color: var(--c-gold);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .login-content h2 {
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      font-weight: 800;
+      color: var(--c-cream);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--c-slate);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    /* Flash Message Box */
+    .flash-box {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .flash-box.success {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+
+    /* Inputs */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-sage);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-field {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px;
+      background: rgba(12, 14, 18, 0.75);
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      color: var(--c-cream);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--c-gold);
+      box-shadow: 0 0 0 3px rgba(191, 160, 84, 0.2);
+    }
+
+    .input-field::placeholder {
+      color: rgba(159, 178, 189, 0.4);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--c-slate);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+    }
+
+    .toggle-password:hover {
+      color: var(--c-cream);
+    }
+
+    /* Sign In Button */
+    .btn-signin {
+      width: 100%;
+      height: 48px;
+      background: var(--c-gold);
+      color: var(--c-black);
+      border: none;
+      border-radius: 10px;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 22px rgba(191, 160, 84, 0.28);
+      margin-top: 4px;
+    }
+
+    .btn-signin:hover {
+      background: var(--c-gold-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(191, 160, 84, 0.4);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--c-slate);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--c-border);
+    }
+
+    /* Google Button */
+    .google-login {
+      width: 100%;
+      height: 48px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      color: var(--c-cream);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(21, 24, 30, 0.85);
+      transition: all 0.2s ease;
+    }
+
+    .google-login:hover {
+      background: rgba(30, 34, 43, 0.95);
+      border-color: var(--c-gold);
+      transform: translateY(-2px);
+    }
+
+    .google-icon {
+      width: 19px;
+      height: 19px;
+    }
+
+    .auth-footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 13.5px;
+      color: var(--c-slate);
+    }
+
+    .auth-footer a {
+      color: var(--c-gold);
+      text-decoration: none;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fadeInText {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      body { padding: 14px; }
+      .login-card { grid-template-columns: 1fr; gap: 0; padding: 10px; }
+      .showcase-container { min-height: 280px; padding: 20px; }
+      .showcase-content h1 { font-size: 28px; }
+      .login-panel { padding: 32px 18px; }
+    }
+  </style>
 </head>
+
 <body>
+  <main class="login-card">
+    
+    <!-- 🖼️ SHOWCASE SECTION WITH 3 AUTO-SLIDING PHOTOS -->
+    <section class="showcase-container">
+      <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1200&q=85');"></div>
+      <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=85');"></div>
+      <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=85');"></div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-container" id="fc">
-        {% for category, message in messages %}
-          <div class="flash-alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-        </div>
-        <script> setTimeout(() => { document.getElementById('fc').style.display='none'; }, 3500); </script>
-      {% endif %}
-    {% endwith %}
+      <!-- Brand Header -->
+      <div class="brand">
+        <div class="brand-mark">✓</div>
+        <span>TaskPro Elite</span>
+      </div>
 
-    <div class="auth-card">
-        <h2>Login to TaskPro Elite</h2>
+      <!-- Dynamic Rotating Text -->
+      <div class="showcase-content">
+        <span class="tag">Next-Gen Workspace</span>
         
+        <div class="slide-text active">
+          <h1>Plan less.<br>Achieve more.</h1>
+          <p>Keep your tasks, milestones, and high-priority goals organized in one focused real-time workspace.</p>
+        </div>
+
+        <div class="slide-text">
+          <h1>Build habits.<br>Ship faster.</h1>
+          <p>Collaborate in real-time with team chat, agile Kanban tracking, and interactive analytics.</p>
+        </div>
+
+        <div class="slide-text">
+          <h1>Focus deeply.<br>Execute daily.</h1>
+          <p>Gain total clarity over your projects with automated reports and intelligent workflow reminders.</p>
+        </div>
+
+        <!-- Progress Indicators -->
+        <div class="progress">
+          <span class="active" onclick="goToSlide(0)"></span>
+          <span onclick="goToSlide(1)"></span>
+          <span onclick="goToSlide(2)"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🔐 LOGIN FORM PANEL -->
+    <section class="login-panel">
+      <div class="login-content">
+        <p class="welcome-label">Welcome Back</p>
+        <h2>Sign in to your workspace</h2>
+        <p class="subtitle">Enter your credentials to access your task dashboard.</p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-box {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Form -->
         <form action="/login" method="POST">
-            <div class="input-group">
-                <label>Username or Email</label>
-                <input type="text" name="username" class="input-field" placeholder="Enter your username" required>
+          <div class="form-group">
+            <label for="username">Username or Email</label>
+            <div class="input-wrapper">
+              <input type="text" id="username" name="username" class="input-field" placeholder="Enter your username or email" required autocomplete="off">
             </div>
-            
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" name="password" id="pwd-input" class="input-field" placeholder="••••••••" required>
-                <span class="pwd-toggle-eye" onclick="togglePwd()">👁️</span>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="password" name="password" class="input-field" placeholder="••••••••" required>
+              <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" title="Toggle Password">👁️</button>
             </div>
-            
-            <button type="submit" class="btn-primary">Sign In</button>
+          </div>
+
+          <button type="submit" class="btn-signin">Sign In</button>
         </form>
 
-        <a href="/login/google" style="text-decoration: none;">
-            <button class="btn-google">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
-                Continue with Google
-            </button>
+        <div class="divider">OR</div>
+
+        <!-- Google OAuth Login -->
+        <a href="/login/google" class="google-login">
+          <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.23a4.47 4.47 0 0 1-1.94 2.93v2.79h3.14c1.84-1.69 2.92-4.18 2.92-7.75Z"/>
+            <path fill="#34A853" d="M12 21.75c2.62 0 4.82-.87 6.43-2.35l-3.14-2.79c-.87.58-1.98.93-3.29.93-2.53 0-4.67-1.71-5.43-4.01H3.33v2.88A9.72 9.72 0 0 0 12 21.75Z"/>
+            <path fill="#FBBC05" d="M6.57 13.53A5.86 5.86 0 0 1 6.27 12c0-.53.1-1.04.3-1.53V7.59H3.33A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.08 4.41l3.24-2.88Z"/>
+            <path fill="#EA4335" d="M12 6.46c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.81 3.53 14.62 2.25 12 2.25a9.72 9.72 0 0 0-8.67 5.34l3.24 2.88C7.33 8.17 9.47 6.46 12 6.46Z"/>
+          </svg>
+          Continue with Google
         </a>
 
-        <div class="redirect-link">
-            Don't have an account? <a href="/register">Register</a>
+        <div class="auth-footer">
+          Don't have an account? <a href="/register">Register</a>
         </div>
-    </div>
+      </div>
+    </section>
 
-    <script>
-        function togglePwd() {
-            const pwd = document.getElementById('pwd-input');
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-            } else {
-                pwd.type = 'password';
-            }
-        }
-    </script>
+  </main>
+
+  <!-- ================= SCRIPTS ================= -->
+  <script>
+    function togglePasswordVisibility() {
+      const passInput = document.getElementById('password');
+      passInput.type = (passInput.type === 'password') ? 'text' : 'password';
+    }
+
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const texts = document.querySelectorAll('.slide-text');
+    const dots = document.querySelectorAll('.progress span');
+    const totalSlides = slides.length;
+
+    function goToSlide(index) {
+      slides[currentSlide].classList.remove('active');
+      texts[currentSlide].classList.remove('active');
+      dots[currentSlide].classList.remove('active');
+
+      currentSlide = (index + totalSlides) % totalSlides;
+
+      slides[currentSlide].classList.add('active');
+      texts[currentSlide].classList.add('active');
+      dots[currentSlide].classList.add('active');
+    }
+
+    setInterval(() => {
+      goToSlide(currentSlide + 1);
+    }, 4500);
+  </script>
 </body>
 </html>
