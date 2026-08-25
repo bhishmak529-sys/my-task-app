@@ -3,85 +3,540 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - TaskPro Elite</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Productivity Analytics & Dashboard - TaskPro Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for Visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Theme State Sync -->
+    <script>
+        const savedTheme = localStorage.getItem('taskpro_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
     <style>
-        body { padding: 20px; color: white; background: #0f172a; }
-        body.light-mode { background: #f1f5f9; color: #0f172a; }
-        .dash-container { max-width: 1000px; margin: auto; }
-        .chart-box { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; }
-        body.light-mode .chart-box { background: white; border-color: #cbd5e1; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        /* 🎨 THEME VARIABLES */
+        :root {
+            --bg-body: #0C0E12;
+            --bg-card: rgba(21, 24, 30, 0.94);
+            --bg-card-elevated: #1A1E26;
+            --border-color: rgba(159, 178, 189, 0.16);
+            --text-main: #EADBCC;
+            --text-muted: #9FB2BD;
+            --accent-gold: #BFA054;
+            --accent-blue: #6366F1;
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
+            --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+
+            /* 🌿 Authentic GitHub Dark Mode Green Palette */
+            --cell-empty: rgba(255, 255, 255, 0.06);
+            --cell-l1: #0e4429;
+            --cell-l2: #006d32;
+            --cell-l3: #26a641;
+            --cell-l4: #39d353;
+        }
+
+        [data-theme="light"] {
+            --bg-body: #F4F6F8;
+            --bg-card: #FFFFFF;
+            --bg-card-elevated: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --accent-gold: #D97706;
+            --accent-blue: #4F46E5;
+            --accent-green: #059669;
+            --accent-red: #DC2626;
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+
+            /* 🌿 Authentic GitHub Light Mode Green Palette */
+            --cell-empty: #ebedf0;
+            --cell-l1: #9be9a8;
+            --cell-l2: #40c463;
+            --cell-l3: #30a14e;
+            --cell-l4: #216e39;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 28px 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Top Header */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .btn-back {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13.5px;
+            transition: all 0.2s ease;
+            box-shadow: var(--card-shadow);
+        }
+
+        .btn-back:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        /* 4 Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(191, 160, 84, 0.14);
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .metric-info h3 {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .metric-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        /* Heatmap Section */
+        .heatmap-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .heatmap-header h2 {
+            font-size: 18px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .legend-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .heatmap-wrapper {
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-rows: repeat(7, 13px);
+            grid-auto-flow: column;
+            grid-auto-columns: 13px;
+            gap: 4px;
+            width: max-content;
+        }
+
+        .day-cell {
+            width: 13px;
+            height: 13px;
+            border-radius: 3px;
+            background-color: var(--cell-empty);
+            cursor: pointer;
+            transition: transform 0.15s ease, outline 0.15s ease;
+        }
+
+        .day-cell:hover {
+            transform: scale(1.4);
+            outline: 2px solid var(--text-main);
+            z-index: 10;
+        }
+
+        .lvl-0 { background-color: var(--cell-empty); }
+        .lvl-1 { background-color: var(--cell-l1); }
+        .lvl-2 { background-color: var(--cell-l2); }
+        .lvl-3 { background-color: var(--cell-l3); }
+        .lvl-4 { 
+            background-color: var(--cell-l4); 
+            box-shadow: 0 0 8px rgba(57, 211, 83, 0.45); 
+        }
+
+        /* Analytics Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .chart-card h3 {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 230px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Floating Tooltip */
+        #heatmap-tooltip {
+            position: fixed;
+            display: none;
+            background: #1E293B;
+            color: #FFFFFF;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
-    <script>if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');</script>
-    <div class="dash-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>📊 {{ user_name }}'s Dashboard</h2>
-            <a href="/" style="background: #6366f1; color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; font-weight: bold;">← Back to Board</a>
+
+    <div id="heatmap-tooltip"></div>
+
+    <div class="dashboard-container">
+        
+        <!-- Top Nav -->
+        <div class="header-bar">
+            <div class="header-title">
+                <h1>Productivity Dashboard</h1>
+                <p>Welcome, {{ user_name }}! Here is your consistency matrix & project health.</p>
+            </div>
+            <a href="/" class="btn-back">← Back to Workspace</a>
         </div>
 
-        <div class="chart-box" style="text-align: center;">
-            <h3>Total Tasks: {{ total_tasks }}</h3>
+        <!-- 4 Metric Cards -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon">🔥</div>
+                <div class="metric-info">
+                    <h3 id="current-streak">0 Days</h3>
+                    <p>Current Streak</p>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">🏆</div>
+                <div class="metric-info">
+                    <h3 id="longest-streak">0 Days</h3>
+                    <p>Longest Streak</p>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">⚡</div>
+                <div class="metric-info">
+                    <h3 id="active-days">0 Days</h3>
+                    <p>Active Days</p>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">🎯</div>
+                <div class="metric-info">
+                    <h3>{{ total_tasks }}</h3>
+                    <p>Total Workspace Tasks</p>
+                </div>
+            </div>
         </div>
 
-        <div class="grid-2">
-            <div class="chart-box">
-                <h3 style="text-align: center; margin-top:0;">Task Status</h3>
-                <canvas id="statusChart"></canvas>
+        <!-- 📈 Activity Heatmap -->
+        <div class="heatmap-card">
+            <div class="heatmap-header">
+                <h2>📈 Activity Heatmap (Last 120 Days)</h2>
+                <div class="heatmap-legend">
+                    <span>Less</span>
+                    <div class="legend-box lvl-0"></div>
+                    <div class="legend-box lvl-1"></div>
+                    <div class="legend-box lvl-2"></div>
+                    <div class="legend-box lvl-3"></div>
+                    <div class="legend-box lvl-4"></div>
+                    <span>More</span>
+                </div>
             </div>
-            <div class="chart-box">
-                <h3 style="text-align: center; margin-top:0;">Task Priority</h3>
-                <canvas id="priorityChart"></canvas>
+
+            <div class="heatmap-wrapper">
+                <div class="heatmap-grid" id="heatmapGrid"></div>
             </div>
         </div>
+
+        <!-- 📊 3 Charts Grid -->
+        <div class="charts-grid">
+            
+            <!-- Status Donut Chart -->
+            <div class="chart-card">
+                <h3>📋 Task Status Breakdown</h3>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Priority Bar Chart -->
+            <div class="chart-card">
+                <h3>⭐ Priority Distribution</h3>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Pie Chart -->
+            <div class="chart-card">
+                <h3>📂 Category Allocation</h3>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
+    <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
+        const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+        const textColor = isDark ? '#EADBCC' : '#1E293B';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+        // 1. Fetch & Render Heatmap Data
+        const tooltip = document.getElementById('heatmap-tooltip');
+        fetch('/api/heatmap_data')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('current-streak').textContent = `${data.current_streak} Day${data.current_streak === 1 ? '' : 's'}`;
+                document.getElementById('longest-streak').textContent = `${data.longest_streak} Day${data.longest_streak === 1 ? '' : 's'}`;
+                document.getElementById('active-days').textContent = `${data.total_active_days} Day${data.total_active_days === 1 ? '' : 's'}`;
+
+                const grid = document.getElementById('heatmapGrid');
+                grid.innerHTML = '';
+
+                Object.keys(data.activities).forEach(dateStr => {
+                    const count = data.activities[dateStr];
+                    const cell = document.createElement('div');
+                    cell.className = 'day-cell';
+
+                    if (count === 0) cell.classList.add('lvl-0');
+                    else if (count === 1) cell.classList.add('lvl-1');
+                    else if (count <= 3) cell.classList.add('lvl-2');
+                    else if (count <= 5) cell.classList.add('lvl-3');
+                    else cell.classList.add('lvl-4');
+
+                    cell.addEventListener('mouseenter', () => {
+                        const dateObj = new Date(dateStr + 'T00:00:00');
+                        const formatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        // Updated Tooltip: Exact Task Completion Grammar
+                        if (count === 0) {
+                            tooltip.innerHTML = `<strong>No tasks completed</strong> on ${formatted}`;
+                        } else if (count === 1) {
+                            tooltip.innerHTML = `<strong>1 task completed</strong> on ${formatted}`;
+                        } else {
+                            tooltip.innerHTML = `<strong>${count} tasks completed</strong> on ${formatted}`;
+                        }
+                        
+                        tooltip.style.display = 'block';
+                    });
+
+                    cell.addEventListener('mousemove', (e) => {
+                        tooltip.style.left = (e.clientX + 12) + 'px';
+                        tooltip.style.top = (e.clientY - 30) + 'px';
+                    });
+
+                    cell.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+
+                    grid.appendChild(cell);
+                });
+            });
+
+        // 2. Render Status Donut Chart
         const statusCtx = document.getElementById('statusChart').getContext('2d');
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Backlog', 'To Do', 'In Progress', 'Done'],
                 datasets: [{
-                    /* VS Code Fix: Wrapped in quotes and Number() */
                     data: [
-                        Number("{{ status_data.backlog }}"), 
-                        Number("{{ status_data.todo }}"), 
-                        Number("{{ status_data.in_progress }}"), 
-                        Number("{{ status_data.done }}")
+                        {{ status_data.backlog }}, 
+                        {{ status_data.todo }}, 
+                        {{ status_data.in_progress }}, 
+                        {{ status_data.done }}
                     ],
-                    backgroundColor: ['#64748b', '#3b82f6', '#f59e0b', '#10b981'],
-                    borderWidth: 0
+                    backgroundColor: ['#64748B', '#6366F1', '#F59E0B', '#10B981'],
+                    borderWidth: 0,
+                    hoverOffset: 6
                 }]
             },
-            options: { plugins: { legend: { labels: { color: localStorage.getItem('theme') === 'light' ? '#0f172a' : 'white' } } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: '600' } } }
+                },
+                cutout: '70%'
+            }
         });
 
+        // 3. Render Priority Bar Chart
         const priorityCtx = document.getElementById('priorityChart').getContext('2d');
         new Chart(priorityCtx, {
             type: 'bar',
             data: {
                 labels: ['High', 'Medium', 'Low'],
                 datasets: [{
-                    label: 'Tasks by Priority',
-                    /* VS Code Fix: Wrapped in quotes and Number() */
+                    label: 'Tasks',
                     data: [
-                        Number("{{ priority_data.high }}"), 
-                        Number("{{ priority_data.medium }}"), 
-                        Number("{{ priority_data.low }}")
+                        {{ priority_data.high }}, 
+                        {{ priority_data.medium }}, 
+                        {{ priority_data.low }}
                     ],
-                    backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
-                    borderRadius: 6
+                    backgroundColor: ['#EF4444', '#F59E0B', '#10B981'],
+                    borderRadius: 8
                 }]
             },
-            options: { 
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { ticks: { color: localStorage.getItem('theme') === 'light' ? '#0f172a' : 'white', stepSize: 1 } },
-                    x: { ticks: { color: localStorage.getItem('theme') === 'light' ? '#0f172a' : 'white' } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600' } } },
+                    y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 } }
+                }
+            }
+        });
+
+        // 4. Render Category Pie Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Personal', 'Work', 'Urgent'],
+                datasets: [{
+                    data: [
+                        {{ category_data.personal }}, 
+                        {{ category_data.work }}, 
+                        {{ category_data.urgent }}
+                    ],
+                    backgroundColor: ['#38BDF8', '#8B5CF6', '#F43F5E'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: '600' } } }
                 }
             }
         });
