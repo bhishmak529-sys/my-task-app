@@ -10,6 +10,12 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
+    <!-- ⚡ Instant Theme Initialization (Syncs with About & Calendar) -->
+    <script>
+        const savedTheme = localStorage.getItem('taskpro_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
     <style>
         /* 🎨 PREMIUM EARTHY MINIMALIST PALETTE */
         :root { 
@@ -22,14 +28,15 @@
             --white: #FFFFFF;
         }
 
-        /* 🌙 DARK MODE VARIABLES */
-        body.dark-mode {
-            --bg-neutral: #0f172a;
-            --card-neutral: #1e293b;
-            --text-color: #f8fafc;
-            --white: #1e293b;
+        /* 🌙 DARK MODE VARIABLES (Applied globally via data-theme & body class) */
+        [data-theme="dark"], body.dark-mode {
+            --bg-neutral: #0B0F19;
+            --card-neutral: #111827;
+            --text-color: #F8FAFC;
+            --white: #1E293B;
             --primary-light: #334155;
-            --primary-dark: #94a3b8;
+            --primary-dark: #94A3B8;
+            --accent-color: #6366F1;
         }
 
         body {
@@ -80,7 +87,7 @@
         /* Buttons (Accent Color) */
         button, .btn-filter, .checklist-add-btn, .btn-submit-file { 
             background: var(--accent-color); 
-            color: var(--white); 
+            color: #FFFFFF; 
             border: none; 
             border-radius: 8px; 
             font-weight: 600; 
@@ -90,7 +97,7 @@
         }
         button:hover, .btn-filter:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(160, 120, 93, 0.3); }
         
-        .btn-clear { background: var(--primary-light); color: var(--white); padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: bold; display: flex; align-items: center; transition: 0.2s;}
+        .btn-clear { background: var(--primary-light); color: #FFFFFF; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: bold; display: flex; align-items: center; transition: 0.2s;}
         .btn-clear:hover { background: var(--primary-dark); }
 
         /* Links & Top Nav */
@@ -104,8 +111,11 @@
             text-decoration: none;
             transition: 0.2s;
             font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
-        .top-links a:hover, .top-links button:hover { background: var(--primary-light); color: var(--white); }
+        .top-links a:hover, .top-links button:hover { background: var(--primary-light); color: #FFFFFF; }
         
         /* Dedicated Accent Buttons in Nav */
         .nav-accent { background: var(--accent-color) !important; color: #FFFFFF !important; border-color: var(--accent-color) !important; }
@@ -144,7 +154,7 @@
         .badge-low { background: var(--card-neutral); color: var(--text-color); border: 1px solid var(--primary-light); }
 
         .btn-action { font-size: 12px; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-weight: 600; border: 1px solid var(--primary-light); color: var(--text-color); margin-right: 5px; transition: 0.2s;}
-        .btn-action:hover { background: var(--primary-dark); color: var(--white); }
+        .btn-action:hover { background: var(--primary-dark); color: #FFFFFF; }
         .mobile-move-btn { background: var(--primary-light) !important; border: none; color: white !important; }
         .mobile-move-btn:hover { background: var(--accent-color) !important; }
 
@@ -205,7 +215,34 @@
         .chat-name { font-weight: bold; color: var(--primary-dark); }
         .chat-time { color: var(--primary-light); font-size: 11px; margin-left: 5px; }
 
-        .attachment-card { position: relative; width: 140px; background: var(--white); border: 1px solid var(--primary-light); border-radius: 8px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* 🖼️ HORIZONTAL SCROLLABLE ATTACHMENTS GALLERY */
+        .attachment-grid {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 10px 5px;
+            width: 100%;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .attachment-card { 
+            position: relative; 
+            width: 140px; 
+            flex: 0 0 auto; /* Prevents shrinking */
+            background: var(--white); 
+            border: 1px solid var(--primary-light); 
+            border-radius: 8px; 
+            padding: 10px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        }
         .attachment-card img { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; cursor: zoom-in; transition: transform 0.2s; }
         .attachment-link { font-size: 12px; color: var(--primary-dark); text-decoration: none; margin-top: 8px; display: inline-block; font-weight: bold; }
         .delete-badge-btn { position: absolute; top: -8px; right: -8px; background: var(--accent-color); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; z-index: 10; }
@@ -219,8 +256,8 @@
 </head>
 <body>
     
-    <!-- 🌟 Hidden Toast Notification Box -->
-    <div id="notification-toast" style="display: none; position: fixed; top: 80px; right: 20px; background-color: var(--primary-dark); color: var(--white); padding: 15px 25px; border-radius: 8px; z-index: 9999; box-shadow: 0px 4px 15px rgba(0,0,0,0.1); transition: 0.3s; font-weight: 500;">
+    <!-- 🌟 Toast Notification Box -->
+    <div id="notification-toast" style="display: none; position: fixed; top: 80px; right: 20px; background-color: var(--primary-dark); color: #FFFFFF; padding: 15px 25px; border-radius: 8px; z-index: 9999; box-shadow: 0px 4px 15px rgba(0,0,0,0.1); transition: 0.3s; font-weight: 500;">
         🔔 <span id="notification-message">You have a new notification!</span>
     </div>
 
@@ -385,6 +422,7 @@
                             {% endif %}
                         </div>
                         
+                        <!-- Attachments Data for Modal -->
                         <div class="hidden-attachments-data" style="display:none;">
                             <div class="attachment-grid">
                                 {% for att in t.attachments %}
@@ -462,7 +500,6 @@
                         <span>🔒 Security & Password</span> <span style="color: var(--primary-dark);">➔</span>
                     </a>
                     
-                    <!-- 🌟 FIX: RESTORED ABOUT PAGE LINK HERE 🌟 -->
                     <a href="/about" style="background: var(--white); color: var(--text-color); border: 1px solid var(--primary-light); padding: 12px 15px; border-radius: 10px; text-decoration: none; font-weight: 600; display: flex; justify-content: space-between; align-items: center; transition: 0.2s;">
                         <span>ℹ️ About Application</span> <span style="color: var(--primary-dark);">➔</span>
                     </a>
@@ -555,26 +592,34 @@
             if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
         }
 
+        // 🌗 UNIFIED THEME ENGINE
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
         
-        if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-mode');
-            themeToggle.innerHTML = '☀️ Light';
-        } else {
-            themeToggle.innerHTML = '🌙 Dark';
+        function applyInitialTheme() {
+            const current = localStorage.getItem('taskpro_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', current);
+            if (current === 'dark') {
+                body.classList.add('dark-mode');
+                themeToggle.innerHTML = '☀️ Light';
+            } else {
+                body.classList.remove('dark-mode');
+                themeToggle.innerHTML = '🌙 Dark';
+            }
         }
+
+        applyInitialTheme();
 
         themeToggle.addEventListener('click', (e) => {
             e.preventDefault();
-            body.classList.toggle('dark-mode');
-            if (body.classList.contains('dark-mode')) {
-                localStorage.setItem('theme', 'dark');
-                themeToggle.innerHTML = '☀️ Light';
-            } else {
-                localStorage.setItem('theme', 'light');
-                themeToggle.innerHTML = '🌙 Dark';
-            }
+            const isDark = body.classList.toggle('dark-mode');
+            const newTheme = isDark ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('taskpro_theme', newTheme);
+            localStorage.setItem('theme', newTheme); // Legacy fallback sync
+            
+            themeToggle.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
         });
 
         let activeCard = null;
