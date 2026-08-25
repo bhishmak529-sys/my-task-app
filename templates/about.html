@@ -5,22 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Platform Documentation - TaskPro Elite</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Auto-detect saved theme from Home page -->
+    <script>
+        const currentTheme = localStorage.getItem('taskpro_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+    </script>
+
     <style>
-        /* 🎨 LIGHT NAUTICAL PALETTE */
         :root {
-            --c-white: #F5FEFF;
-            --c-blue-light: #AAC0E1;
-            --c-blue-dark: #0E2F76;
+            --bg-body: #F5FEFF;
+            --bg-card: #FFFFFF;
+            --bg-accordion: rgba(170, 192, 225, 0.15);
+            --bg-accordion-hover: rgba(170, 192, 225, 0.25);
+            --border-subtle: rgba(170, 192, 225, 0.4);
+            --text-primary: #0E2F76;
+            --text-secondary: rgba(14, 47, 118, 0.85);
+            --accent-btn: #AAC0E1;
+            --accent-btn-text: #0E2F76;
+            --accordion-active-bg: #0E2F76;
+            --accordion-active-text: #F5FEFF;
+            --card-shadow: 0 10px 30px rgba(14, 47, 118, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0B0F19;
+            --bg-card: #111827;
+            --bg-accordion: rgba(255, 255, 255, 0.03);
+            --bg-accordion-hover: rgba(255, 255, 255, 0.06);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-primary: #F3F4F6;
+            --text-secondary: #9CA3AF;
+            --accent-btn: #1F2937;
+            --accent-btn-text: #F3F4F6;
+            --accordion-active-bg: #1F2937;
+            --accordion-active-text: #FFFFFF;
+            --card-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
         }
 
         body {
-            background-color: var(--c-white);
-            color: var(--c-blue-dark);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 40px 20px;
             display: flex;
             justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -39,38 +70,37 @@
             margin: 0;
             font-size: 28px;
             font-weight: 700;
-            color: var(--c-blue-dark);
+            color: var(--text-primary);
         }
 
         .back-btn {
-            background-color: var(--c-blue-light);
-            color: var(--c-blue-dark);
+            background-color: var(--accent-btn);
+            color: var(--accent-btn-text);
             padding: 10px 20px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
             transition: 0.3s;
-            border: 1px solid transparent;
+            border: 1px solid var(--border-subtle);
         }
 
         .back-btn:hover {
-            background-color: var(--c-blue-dark);
-            color: var(--c-white);
+            opacity: 0.85;
         }
 
         .welcome-card {
-            background: #FFFFFF;
-            border: 1px solid rgba(170, 192, 225, 0.4);
-            border-left: 6px solid var(--c-blue-light);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-left: 6px solid #6366F1;
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(14, 47, 118, 0.05);
+            box-shadow: var(--card-shadow);
         }
 
         .welcome-card h2 {
-            color: var(--c-blue-dark);
+            color: var(--text-primary);
             font-size: 22px;
             margin-top: 0;
             margin-bottom: 15px;
@@ -78,7 +108,7 @@
 
         .welcome-card p {
             line-height: 1.7;
-            color: rgba(14, 47, 118, 0.85);
+            color: var(--text-secondary);
             font-size: 14px;
             margin: 0;
         }
@@ -90,24 +120,22 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            color: var(--c-blue-dark);
+            color: var(--text-primary);
         }
 
-        /* 🌟 UPGRADED SMOOTH ACCORDION STYLES 🌟 */
         .accordion-item {
             margin-bottom: 15px;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(14, 47, 118, 0.05);
-            border: 1px solid rgba(170, 192, 225, 0.3);
-            background: rgba(170, 192, 225, 0.15); 
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-accordion); 
             transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .accordion-item.active {
-            background: var(--c-blue-dark);
-            box-shadow: 0 8px 20px rgba(14, 47, 118, 0.15);
-            border-color: var(--c-blue-dark);
+            background: var(--accordion-active-bg);
+            border-color: #6366F1;
         }
 
         .accordion-header {
@@ -118,40 +146,38 @@
             align-items: center;
             gap: 15px;
             cursor: pointer;
-            color: var(--c-blue-dark);
+            color: var(--text-primary);
             transition: color 0.3s ease, background 0.3s ease;
             user-select: none;
         }
 
         .accordion-header:hover {
-            background: rgba(170, 192, 225, 0.2);
+            background: var(--bg-accordion-hover);
         }
 
         .accordion-item.active .accordion-header {
-            color: var(--c-white);
+            color: var(--accordion-active-text);
             background: transparent;
-            border-bottom: 1px solid rgba(245, 254, 255, 0.1);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
-        /* The Secret to Smooth Sliding */
         .accordion-content {
             max-height: 0;
             opacity: 0;
             overflow: hidden;
-            padding: 0 20px; /* Zero vertical padding when closed */
-            background: rgba(0, 0, 0, 0.15);
+            padding: 0 20px;
+            background: rgba(0, 0, 0, 0.08);
             transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out, padding 0.4s ease-in-out;
         }
 
-        /* When active, expand height and opacity */
         .accordion-item.active .accordion-content {
-            max-height: 800px; /* Large enough to hold the content */
+            max-height: 800px;
             opacity: 1;
-            padding: 20px 20px 25px 20px; /* Restore vertical padding */
+            padding: 20px 20px 25px 20px;
         }
 
         .accordion-content p {
-            color: var(--c-blue-light);
+            color: var(--text-secondary);
             margin-top: 0;
             line-height: 1.6;
             font-size: 14px;
@@ -159,8 +185,21 @@
         }
 
         .check-list { list-style: none; padding: 0; margin: 0; }
-        .check-list li { color: var(--c-white); margin-bottom: 15px; font-size: 13.5px; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
-        .check-list li span { color: var(--c-blue-light); font-weight: bold; font-size: 16px; }
+        .check-list li { 
+            color: var(--text-primary); 
+            margin-bottom: 15px; 
+            font-size: 13.5px; 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 10px; 
+            line-height: 1.5; 
+        }
+        
+        .accordion-item.active .check-list li {
+            color: var(--accordion-active-text);
+        }
+
+        .check-list li span { color: #6366F1; font-weight: bold; font-size: 16px; }
 
         .toggle-icon {
             margin-left: auto;
@@ -181,120 +220,96 @@
 
         <div class="welcome-card">
             <h2>Welcome to TaskPro Elite</h2>
-            <p>TaskPro Elite is a highly optimized, real-time productivity workspace designed for professionals and students. Engineered to streamline your workflow, it combines agile Kanban methodologies with seamless cloud synchronization, ensuring you never miss a deadline. Review the comprehensive guide below to maximize your efficiency.</p>
+            <p>TaskPro Elite is a highly optimized, real-time productivity workspace designed for professionals and students. Engineered to streamline your workflow, it combines agile Kanban methodologies with seamless cloud synchronization, ensuring you never miss a deadline.</p>
         </div>
 
         <div class="section-title">
             📖 Comprehensive User Guide
         </div>
 
-        <!-- ACCORDION ITEM 1 -->
         <div class="accordion-item active">
             <div class="accordion-header" onclick="toggleAccordion(this)">
                 🚀 1. Agile Kanban Workspace
                 <span class="toggle-icon">⌄</span>
             </div>
             <div class="accordion-content">
-                <p>The core of TaskPro Elite is built around an intuitive, drag-and-drop Kanban board.</p>
+                <p>The core of TaskPro Elite is built around an intuitive Kanban board.</p>
                 <ul class="check-list">
-                    <li><span>✓</span> <div><strong>Task Lifecycle:</strong> New entries default to the Backlog. Click, hold, and drag cards across To Do, In Progress, and Done stages to reflect real-time status.</div></li>
-                    <li><span>✓</span> <div><strong>Smart Filtering:</strong> Utilize the top navigation bar to instantly filter your workspace by Category (Work, Personal, Urgent) or Priority levels.</div></li>
-                    <li><span>✓</span> <div><strong>Visual Indicators:</strong> Cards automatically highlight to visually warn you when critical deadlines are approaching.</div></li>
+                    <li><span>✓</span> <div><strong>Task Lifecycle:</strong> New entries default to the Backlog. Move cards across To Do, In Progress, and Done stages.</div></li>
+                    <li><span>✓</span> <div><strong>Smart Filtering:</strong> Filter your workspace by Category or Priority levels directly from the top bar.</div></li>
+                    <li><span>✓</span> <div><strong>Visual Indicators:</strong> Cards automatically highlight when critical deadlines approach.</div></li>
                 </ul>
             </div>
         </div>
 
-        <!-- ACCORDION ITEM 2 -->
         <div class="accordion-item">
             <div class="accordion-header" onclick="toggleAccordion(this)">
-                📁 2. Task Architecture & Cloud Media
+                📁 2. Task Architecture & Media
                 <span class="toggle-icon">⌄</span>
             </div>
             <div class="accordion-content">
-                <p>Attach vital resources directly to your workflows.</p>
+                <p>Attach vital resources directly to your tasks.</p>
                 <ul class="check-list">
-                    <li><span>✓</span> <div><strong>File Attachments:</strong> Upload images, documents, and reference materials directly into task cards.</div></li>
-                    <li><span>✓</span> <div><strong>Horizontal Media Gallery:</strong> View your task images seamlessly through an optimized, sideways-scrolling image gallery right inside the modal.</div></li>
+                    <li><span>✓</span> <div><strong>File Attachments:</strong> Upload images and documents directly into task cards.</div></li>
+                    <li><span>✓</span> <div><strong>Horizontal Gallery:</strong> View attachments smoothly in a sideways-scrolling horizontal gallery.</div></li>
                 </ul>
             </div>
         </div>
         
-        <!-- ACCORDION ITEM 3 -->
         <div class="accordion-item">
             <div class="accordion-header" onclick="toggleAccordion(this)">
-                🤝 3. Real-Time Collaboration Ecosystem
+                🤝 3. Real-Time Collaboration
                 <span class="toggle-icon">⌄</span>
             </div>
             <div class="accordion-content">
-                <p>Work seamlessly with your team using high-speed WebSockets.</p>
+                <p>Work seamlessly with collaborators using high-speed WebSockets.</p>
                 <ul class="check-list">
-                    <li><span>✓</span> <div><strong>Live Task Movement:</strong> When a team member updates or moves a task, your screen syncs instantly without ever needing to refresh.</div></li>
-                    <li><span>✓</span> <div><strong>Live Chat Room:</strong> Click on any task to enter its dedicated discussion room and chat instantly with collaborators to keep ideas flowing.</div></li>
+                    <li><span>✓</span> <div><strong>Live Updates:</strong> Task movements sync instantly without refreshing the page.</div></li>
+                    <li><span>✓</span> <div><strong>Live Chat:</strong> Open any task to discuss details in a dedicated real-time chat room.</div></li>
                 </ul>
             </div>
         </div>
 
-        <!-- 🌟 BRAND NEW ITEM 4 🌟 -->
         <div class="accordion-item">
             <div class="accordion-header" onclick="toggleAccordion(this)">
-                📊 4. Data Export & Reporting
+                📊 4. Data Export & Backups
                 <span class="toggle-icon">⌄</span>
             </div>
             <div class="accordion-content">
-                <p>Generate professional reports instantly for offline access or record-keeping.</p>
+                <p>Generate reports instantly for offline access.</p>
                 <ul class="check-list">
-                    <li><span>✓</span> <div><strong>Dynamic PDF Export:</strong> Download a beautifully formatted, print-ready PDF report of your current board status with just one click.</div></li>
-                    <li><span>✓</span> <div><strong>CSV Backup:</strong> Export all your tasks and descriptions into an Excel/CSV format for deep data analysis or safekeeping.</div></li>
+                    <li><span>✓</span> <div><strong>PDF Export:</strong> Download a clean, print-ready PDF summary of your board.</div></li>
+                    <li><span>✓</span> <div><strong>CSV Backup:</strong> Export task data into spreadsheet formats anytime.</div></li>
                 </ul>
             </div>
         </div>
 
-        <!-- 🌟 BRAND NEW ITEM 5 🌟 -->
         <div class="accordion-item">
             <div class="accordion-header" onclick="toggleAccordion(this)">
-                🔒 5. Advanced Security & Access
+                🔒 5. Security & Authentication
                 <span class="toggle-icon">⌄</span>
             </div>
             <div class="accordion-content">
-                <p>Your workflow data is protected with enterprise-level security measures.</p>
+                <p>Modern authentication standards protect your workspace.</p>
                 <ul class="check-list">
-                    <li><span>✓</span> <div><strong>Google OAuth 2.0:</strong> Skip password creation entirely. Use secure, one-click sign-in via your existing Google Account.</div></li>
-                    <li><span>✓</span> <div><strong>Encrypted Passwords:</strong> For standard accounts, all passwords are salted and hashed using modern PBKDF2 encryption before hitting the database.</div></li>
+                    <li><span>✓</span> <div><strong>Google OAuth 2.0:</strong> One-click secure sign-in via verified Google accounts.</div></li>
+                    <li><span>✓</span> <div><strong>Hashed Passwords:</strong> Credentials are securely encrypted in the database.</div></li>
                 </ul>
             </div>
         </div>
-
-        <!-- 🌟 BRAND NEW ITEM 6 🌟 -->
-        <div class="accordion-item">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                ✨ 6. Premium Aesthetic Optimization
-                <span class="toggle-icon">⌄</span>
-            </div>
-            <div class="accordion-content">
-                <p>A workspace should be a joy to look at. We crafted a UI that reduces eye strain.</p>
-                <ul class="check-list">
-                    <li><span>✓</span> <div><strong>Muted Elegance Theme:</strong> Enjoy a sophisticated color palette designed to look professional, calm, and perfectly balanced.</div></li>
-                    <li><span>✓</span> <div><strong>Creator's Calendar:</strong> View all your deadlines in a beautiful grid layout that syncs effortlessly with your main board.</div></li>
-                </ul>
-            </div>
-        </div>
-
     </div>
 
-    <!-- THE JAVASCRIPT ENGINE -->
     <script>
         function toggleAccordion(clickedHeader) {
             const currentItem = clickedHeader.parentElement;
             const allItems = document.querySelectorAll('.accordion-item');
             
-            // Close other items smoothly
             allItems.forEach(item => {
                 if (item !== currentItem) {
                     item.classList.remove('active');
                 }
             });
 
-            // Toggle the clicked one
             currentItem.classList.toggle('active');
         }
     </script>
