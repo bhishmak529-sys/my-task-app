@@ -3,141 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator's Calendar - TaskPro Elite</title>
-    <!-- Premium Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    <title>Schedule View - TaskPro Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    
+    <!-- Auto-detect saved theme from Home page -->
+    <script>
+        const currentTheme = localStorage.getItem('taskpro_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+    </script>
+
     <style>
-        /* 🎨 THE NEW EARTHY MINIMALIST PALETTE (Matched perfectly to index.html) */
-        :root { 
-            --primary-light: #8b9fa0;
-            --primary-dark: #5e716a;
-            --bg-neutral: #eceae4;
-            --card-neutral: #dccfba;
-            --accent-color: #a0785d;
-            --text-color: #373737;
-            --white: #ffffff;
+        :root {
+            --bg-body: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --border-subtle: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --accent: #6366F1;
+            --btn-bg: #FFFFFF;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0B0F19;
+            --bg-card: #111827;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-primary: #F3F4F6;
+            --text-secondary: #9CA3AF;
+            --accent: #6366F1;
+            --btn-bg: #1F2937;
+            --card-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
         }
 
         body {
-            background-color: var(--bg-neutral);
-            color: var(--text-color);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 40px 20px;
+            padding: 25px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        .header-bar {
-            max-width: 1200px;
-            margin: 0 auto 30px auto;
+        .calendar-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 25px;
         }
 
-        .header-bar h1 {
+        .calendar-header h2 {
             margin: 0;
-            font-family: 'Playfair Display', serif;
-            color: var(--text-color);
-            font-size: 32px;
-        }
-
-        .back-btn {
-            background-color: var(--primary-dark);
-            color: var(--white);
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            font-size: 22px;
             font-weight: 700;
-            transition: all 0.3s ease;
         }
 
-        .back-btn:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-2px);
-        }
-
-        /* 🗓️ PREMIUM CALENDAR WRAPPER */
-        .calendar-wrapper {
-            background: var(--white);
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--primary-light);
-        }
-
-        /* OVERRIDING FULLCALENDAR CSS TO MATCH THEME */
-        .fc-theme-standard td, .fc-theme-standard th {
-            border-color: var(--primary-light);
-        }
-        .fc-col-header-cell {
-            background: var(--card-neutral);
-            padding: 15px 0;
-            color: var(--text-color);
+        .btn-link {
+            background: var(--btn-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
             font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s ease;
+        }
+
+        .btn-link:hover {
+            border-color: var(--accent);
+        }
+
+        /* FullCalendar Custom Theming */
+        .fc {
             font-family: 'Inter', sans-serif;
-            text-transform: uppercase;
-            font-size: 13px;
         }
-        .fc-daygrid-day-number {
-            color: var(--text-color);
-            font-weight: 600;
-            padding: 10px !important;
-            text-decoration: none !important;
-        }
-        .fc-day-today {
-            background-color: #f7f5f0 !important; /* Extremely light tint for today */
-        }
-        .fc-toolbar-title {
-            color: var(--text-color) !important;
-            font-family: 'Playfair Display', serif !important;
-            font-size: 28px !important;
-        }
-        .fc-button-primary {
-            background-color: var(--primary-light) !important;
-            border: none !important;
-            border-radius: 8px !important;
-            text-transform: capitalize !important;
-            font-family: 'Inter', sans-serif !important;
-            font-weight: 600 !important;
-            padding: 8px 16px !important;
-            transition: 0.3s ease !important;
-            color: var(--white) !important;
-        }
-        .fc-button-primary:hover, .fc-button-primary:not(:disabled).fc-button-active {
-            background-color: var(--primary-dark) !important;
-            color: var(--white) !important;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-        }
-        
-        /* Event Cards */
+
         .fc-event {
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-weight: 600;
+            font-size: 12px;
             border: none !important;
-            border-radius: 4px !important;
-            padding: 4px 8px !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            font-family: 'Inter', sans-serif !important;
+            background-color: var(--accent) !important;
             cursor: pointer;
-            transition: transform 0.2s;
         }
-        .fc-event:hover {
-            transform: scale(1.02);
-            filter: brightness(0.9);
+
+        [data-theme="dark"] .fc {
+            --fc-page-bg-color: var(--bg-card);
+            --fc-neutral-bg-color: #1F2937;
+            --fc-theme-standard-border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .fc-toolbar-title {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .fc-button {
+            background: #1F2937 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #F3F4F6 !important;
+        }
+
+        [data-theme="dark"] .fc-button-active,
+        [data-theme="dark"] .fc-button:hover {
+            background: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: #FFFFFF !important;
+        }
+
+        [data-theme="dark"] .fc-col-header-cell {
+            background: #151D2F !important;
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .fc-daygrid-day-number {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .fc-day-today {
+            background: rgba(99, 102, 241, 0.12) !important;
         }
     </style>
 </head>
 <body>
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <h2>📅 Schedule & Milestones</h2>
+            <a href="/" class="btn-link">← Back to Workspace</a>
+        </div>
 
-    <div class="header-bar">
-        <h1>Creator's Calendar 🗓️</h1>
-        <a href="/" class="back-btn">← Back to Board</a>
-    </div>
-
-    <div class="calendar-wrapper">
-        <div id='calendar'></div>
+        <div id="calendar"></div>
     </div>
 
     <script>
@@ -148,21 +157,13 @@
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
                 },
-                height: 800,
                 events: '/api/calendar_events',
-                eventDidMount: function(info) {
-                    // Match the elegant theme colors
-                    if(info.event.extendedProps.status === 'Done') {
-                        info.el.style.backgroundColor = 'var(--primary-light)'; 
-                        info.el.style.color = 'var(--white)';
-                    } else if (info.event.extendedProps.priority === 'High') {
-                        info.el.style.backgroundColor = 'var(--accent-color)'; 
-                        info.el.style.color = 'var(--white)';
-                    } else {
-                        info.el.style.backgroundColor = 'var(--primary-dark)'; 
-                        info.el.style.color = 'var(--white)';
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        window.location.href = info.event.url;
+                        info.jsEvent.preventDefault();
                     }
                 }
             });
