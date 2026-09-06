@@ -187,7 +187,14 @@ def google_authorize():
     
     if not user:
         random_safe_password = secrets.token_urlsafe(20)
-        user = User(username=email, password=generate_password_hash(random_safe_password, method='pbkdf2:sha256'))
+        default_display = email.split('@')[0]
+        user = User(
+            username=email, 
+            password=generate_password_hash(random_safe_password, method='pbkdf2:sha256'),
+            display_name=default_display,
+            profile_pic=picture,
+            xp=0
+        )
         db.session.add(user)
         db.session.commit()
         
@@ -200,14 +207,43 @@ def google_authorize():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        un, pw = request.form.get('username'), request.form.get('password')
-        if not User.query.filter_by(username=un).first():
-            db.session.add(User(username=un, password=generate_password_hash(pw, method='pbkdf2:sha256')))
+        try:
+            un = request.form.get('username', '').strip()
+            pw = request.form.get('password', '').strip()
+
+            if not un or not pw:
+                flash("Username and password cannot be empty! ❌", "error")
+                return render_template("register.html")
+
+            existing_user = User.query.filter_by(username=un).first()
+            if existing_user:
+                flash("Username or Email already exists! ❌", "error")
+                return render_template("register.html")
+
+            hashed_pw = generate_password_hash(pw, method='pbkdf2:sha256')
+            default_display = un.split('@')[0]
+            default_avatar = f"https://ui-avatars.com/api/?name={default_display}&background=BFA054&color=0C0E12"
+
+            new_user = User(
+                username=un,
+                password=hashed_pw,
+                display_name=default_display,
+                profile_pic=default_avatar,
+                xp=0
+            )
+
+            db.session.add(new_user)
             db.session.commit()
-            flash("Account created successfully! Please login.", "success")
+
+            flash("Account created successfully! Please login. 🎉", "success")
             return redirect(url_for('login'))
-        else:
-            flash("Username already exists! ❌", "error")
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ REGISTRATION ERROR: {str(e)}")
+            flash(f"An error occurred during registration: {str(e)}", "error")
+            return render_template("register.html")
+
     return render_template("register.html")
 
 @app.route("/login", methods=['GET', 'POST'])
