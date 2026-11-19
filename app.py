@@ -5,7 +5,6 @@ import os
 import io
 import csv
 import secrets
-import threading
 import smtplib
 import atexit
 from datetime import datetime, timedelta
@@ -15,58 +14,70 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import (
-    Flask, render_template, request, redirect, 
+    Flask, render_template, request, redirect,
     url_for, flash, jsonify, session, Response
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
-    UserMixin, login_user, LoginManager, 
+    UserMixin, login_user, LoginManager,
     login_required, logout_user, current_user
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
-from sqlalchemy import text, func
-from flask_socketio import SocketIO, emit
+from sqlalchemy import func
+from flask_socketio import SocketIO
 from apscheduler.schedulers.background import BackgroundScheduler
 from fpdf import FPDF
 
 # ================= APP CONFIGURATION =================
 app = Flask(__name__)
-
-# Render reverse proxy header fix for HTTPS redirects
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Email Credentials
-SYSTEM_EMAIL = "task.manage.0@gmail.com" 
-SYSTEM_APP_PASSWORD = "dryd orfy gpnl vfzb" 
+# Load credentials from environment variables
+SYSTEM_EMAIL = os.getenv('SYSTEM_EMAIL')
+SYSTEM_APP_PASSWORD = os.getenv('SYSTEM_APP_PASSWORD')
 
-# Security & Secret Key
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'supersecretkey123')
 
-# Database Connection (Handles Render/Neon postgresql dialect)
+# Database configuration with connection pooling for Render/PostgreSQL
 db_url = os.getenv('DATABASE_URL', 'sqlite:///taskpro_live_production.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 270,
+    "pool_timeout": 20,
+}
 
-# File Upload Configuration
+# Upload security configuration (5 MB max)
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'docx'}
 
-# Real-time WebSocket Engine
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Session cookie hardening
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+if os.getenv('RENDER'):
+    app.config['SESSION_COOKIE_SECURE'] = True
+
 socketio = SocketIO(app, cors_allowed_origins="*")
-
 db = SQLAlchemy(app)
 oauth = OAuth(app)
 
 # ================= GOOGLE OAUTH CONFIGURATION =================
 google = oauth.register(
     name='google',
-    client_id=os.getenv('GOOGLE_ID'),          
-    client_secret=os.getenv('GOOGLE_SECRET'),  
+    client_id=os.getenv('GOOGLE_ID'),
+    client_secret=os.getenv('GOOGLE_SECRET'),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
@@ -77,7 +88,38 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    try:
+        return db.session.get(User, int(user_id))
+    except Exception:
+        db.session.remove()
+        try:
+            return db.session.get(User, int(user_id))
+        except Exception:
+            return None
+
+# ================= SECURITY HEADERS & ERROR HANDLERS =================
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
+    else:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response
+
+@app.errorhandler(413)
+def handle_file_too_large(e):
+    flash("File is too large! Maximum allowed size is 5 MB. ❌", "error")
+    return redirect(url_for('home'))
+
+@app.errorhandler(500)
+def handle_500_error(e):
+    db.session.rollback()
+    db.session.remove()
+    flash("Session refreshed after inactivity. Please continue. 🔄", "info")
+    return redirect(url_for('login'))
 
 # ================= DATABASE MODELS =================
 class User(db.Model, UserMixin):
@@ -86,7 +128,7 @@ class User(db.Model, UserMixin):
     display_name = db.Column(db.String(100), nullable=True)
     profile_pic = db.Column(db.String(300), nullable=True)
     password = db.Column(db.String(150), nullable=False)
-    xp = db.Column(db.Integer, default=0) 
+    xp = db.Column(db.Integer, default=0)
     tasks = db.relationship('Task', backref='owner', lazy=True)
 
     @property
@@ -98,7 +140,8 @@ class User(db.Model, UserMixin):
         elif current_xp >= 50: return "Apprentice 🎖️"
         else: return "Novice 🥉"
 
-task_collaborators = db.Table('task_collaborators',
+task_collaborators = db.Table(
+    'task_collaborators',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('task_id', db.Integer, db.ForeignKey('task.id'), primary_key=True)
 )
@@ -135,7 +178,7 @@ class Task(db.Model):
     priority = db.Column(db.String(20), default='Medium')
     due_date = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(50), default='Backlog')
-    description = db.Column(db.Text, default='', nullable=True) 
+    description = db.Column(db.Text, default='', nullable=True)
     attachments = db.relationship('Attachment', backref='task', cascade='all, delete-orphan', lazy=True)
     subtasks = db.relationship('SubTask', backref='task', cascade='all, delete-orphan', lazy=True)
     comments = db.relationship('Comment', backref='task', cascade='all, delete-orphan', lazy=True)
@@ -148,8 +191,7 @@ with app.app_context():
 
 # ================= EMAIL HELPER =================
 def send_notification_email(receiver_email, sender_name, task_name):
-    if SYSTEM_EMAIL == "your_actual_email@gmail.com":
-        print("⚠️ Email not sent: SYSTEM_EMAIL is not configured.")
+    if not SYSTEM_EMAIL or not SYSTEM_APP_PASSWORD:
         return
     try:
         msg = MIMEText(
@@ -165,9 +207,8 @@ def send_notification_email(receiver_email, sender_name, task_name):
         server.login(SYSTEM_EMAIL, SYSTEM_APP_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"📧 Email sent successfully to {receiver_email}")
     except Exception as e:
-        print(f"❌ Failed to send email: {e}")
+        print(f"Email delivery error: {e}")
 
 # ================= AUTHENTICATION ROUTES =================
 @app.route('/login/google')
@@ -184,12 +225,12 @@ def google_authorize():
     email = user_info.get('email')
     picture = user_info.get('picture')
     user = User.query.filter_by(username=email).first()
-    
+
     if not user:
         random_safe_password = secrets.token_urlsafe(20)
         default_display = email.split('@')[0]
         user = User(
-            username=email, 
+            username=email,
             password=generate_password_hash(random_safe_password, method='pbkdf2:sha256'),
             display_name=default_display,
             profile_pic=picture,
@@ -197,7 +238,7 @@ def google_authorize():
         )
         db.session.add(user)
         db.session.commit()
-        
+
     login_user(user)
     if not current_user.profile_pic:
         session['profile_pic'] = picture
@@ -213,6 +254,10 @@ def register():
 
             if not un or not pw:
                 flash("Username and password cannot be empty! ❌", "error")
+                return render_template("register.html")
+
+            if len(pw) < 6:
+                flash("Password must be at least 6 characters long! ❌", "error")
                 return render_template("register.html")
 
             existing_user = User.query.filter_by(username=un).first()
@@ -231,7 +276,6 @@ def register():
                 profile_pic=default_avatar,
                 xp=0
             )
-
             db.session.add(new_user)
             db.session.commit()
 
@@ -240,8 +284,7 @@ def register():
 
         except Exception as e:
             db.session.rollback()
-            print(f"❌ REGISTRATION ERROR: {str(e)}")
-            flash(f"An error occurred during registration: {str(e)}", "error")
+            flash("An error occurred during registration. Please try again.", "error")
             return render_template("register.html")
 
     return render_template("register.html")
@@ -271,20 +314,23 @@ def logout():
 @app.route("/update_profile", methods=["POST"])
 @login_required
 def update_profile():
-    new_name = request.form.get("display_name")
+    new_name = request.form.get("display_name", "").strip()
     if new_name:
-        current_user.display_name = new_name 
+        current_user.display_name = new_name
         db.session.add(ActivityLog(description="Updated Display Name", user_id=current_user.id))
 
     file = request.files.get("profile_pic")
     if file and file.filename != '':
+        if not allowed_file(file.filename):
+            flash("Invalid image format! Only PNG, JPG, GIF, WEBP allowed. ❌", "error")
+            return redirect(url_for('home'))
         filename = secure_filename(file.filename)
         unique_filename = f"dp_{current_user.id}_{secrets.token_hex(4)}_{filename}"
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(file_path) 
-        current_user.profile_pic = f"/static/uploads/{unique_filename}" 
+        file.save(file_path)
+        current_user.profile_pic = f"/static/uploads/{unique_filename}"
         session['profile_pic'] = current_user.profile_pic
         db.session.add(ActivityLog(description="Updated Profile Picture", user_id=current_user.id))
 
@@ -301,16 +347,16 @@ def change_password():
     old_pw = request.form.get("old_password")
     new_pw = request.form.get("new_password")
     confirm_pw = request.form.get("confirm_password")
-    
+
     old_err, new_err = None, None
-    
+
     if not check_password_hash(current_user.password, old_pw):
         old_err = "Incorrect current password!"
     if new_pw != confirm_pw:
         new_err = "New passwords do not match!"
-    elif len(new_pw) < 4:
-        new_err = "Password must be at least 4 characters long!"
-        
+    elif len(new_pw) < 6:
+        new_err = "Password must be at least 6 characters long!"
+
     if old_err or new_err:
         return render_template("security.html", old_err=old_err, new_err=new_err)
 
@@ -332,7 +378,7 @@ def home():
         my_query = my_query.filter_by(category=cat_filter)
     if pri_filter != 'All':
         my_query = my_query.filter_by(priority=pri_filter)
-        
+
     my_tasks = my_query.all()
 
     shared_tasks = current_user.shared_tasks.all()
@@ -343,7 +389,7 @@ def home():
 
     tasks = list(set(my_tasks + shared_tasks))
     logs = ActivityLog.query.filter_by(user_id=current_user.id).order_by(ActivityLog.timestamp.desc()).limit(20).all()
-    
+
     today_date_only = (datetime.utcnow() + timedelta(hours=5, minutes=30)).replace(hour=0, minute=0, second=0, microsecond=0)
     for t in tasks:
         t.is_overdue = False
@@ -352,43 +398,43 @@ def home():
         if t.due_date and t.status != 'Done':
             try:
                 delta = (datetime.strptime(t.due_date, '%d %b %Y') - today_date_only).days
-                if delta < 0: 
+                if delta < 0:
                     t.is_overdue = True
-                    t.sort_score = 1 
-                elif delta in [0, 1]: 
+                    t.sort_score = 1
+                elif delta in [0, 1]:
                     t.is_due_soon = True
-                    t.sort_score = 2 
-                else: 
+                    t.sort_score = 2
+                else:
                     t.sort_score = 3 + delta
-            except Exception: 
+            except Exception:
                 t.sort_score = 1000
-        elif t.status == 'Done': 
-            t.sort_score = 9999 
-        else: 
+        elif t.status == 'Done':
+            t.sort_score = 9999
+        else:
             t.sort_score = {'High': 500, 'Medium': 600, 'Low': 700}.get(t.priority, 600)
-            
+
     tasks.sort(key=lambda x: x.sort_score)
     total_tasks = len(tasks)
     done_tasks = sum(1 for t in tasks if t.status == 'Done')
     progress = round((done_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-    
+
     return render_template(
-        "index.html", 
-        tasks=tasks, 
-        user_name=current_user.username, 
-        progress=progress, 
-        logs=logs, 
-        current_cat=cat_filter, 
+        "index.html",
+        tasks=tasks,
+        user_name=current_user.username,
+        progress=progress,
+        logs=logs,
+        current_cat=cat_filter,
         current_pri=pri_filter
     )
 
 @app.route("/add", methods=["POST"])
 @login_required
 def add_task():
-    name = request.form.get("task_name")
+    name = request.form.get("task_name", "").strip()
     category = request.form.get("category")
     priority = request.form.get("priority", "Medium")
-    raw_date = request.form.get("due_date") 
+    raw_date = request.form.get("due_date")
 
     try:
         date_obj = datetime.strptime(raw_date, '%Y-%m-%d')
@@ -398,43 +444,41 @@ def add_task():
 
     if name:
         new_task = Task(
-            name=name, 
-            user_id=current_user.id, 
-            category=category, 
-            priority=priority, 
-            due_date=formatted_date, 
+            name=name,
+            user_id=current_user.id,
+            category=category,
+            priority=priority,
+            due_date=formatted_date,
             description=''
         )
         db.session.add(new_task)
         db.session.add(ActivityLog(description=f"Created task: '{name}'", user_id=current_user.id))
         db.session.commit()
-        
+
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': name, 'status': 'Backlog'})
         flash(f"New task '{name}' added successfully! ✅", "success")
-        
+
     return redirect(url_for('home'))
 
 @app.route("/move/<int:tid>/<string:new_status>")
 @login_required
 def move_task(tid, new_status):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
         old_status = task.status
         task.status = new_status
-        
-        if current_user.xp is None: 
+
+        if current_user.xp is None:
             current_user.xp = 0
         if old_status != 'Done' and new_status == 'Done':
             current_user.xp += 10
         elif old_status == 'Done' and new_status != 'Done':
-            current_user.xp -= 10
-            if current_user.xp < 0: 
-                current_user.xp = 0
+            current_user.xp = max(0, current_user.xp - 10)
 
         db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
         db.session.commit()
-        
+
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': task.status})
     return redirect(url_for('home'))
@@ -443,23 +487,21 @@ def move_task(tid, new_status):
 @login_required
 def update_status():
     data = request.get_json()
-    task = Task.query.get(data['task_id'])
+    task = db.session.get(Task, data['task_id'])
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
         old_status = task.status
         task.status = data['new_status']
 
-        if current_user.xp is None: 
+        if current_user.xp is None:
             current_user.xp = 0
         if old_status != 'Done' and task.status == 'Done':
             current_user.xp += 10
         elif old_status == 'Done' and task.status != 'Done':
-            current_user.xp -= 10
-            if current_user.xp < 0: 
-                current_user.xp = 0
+            current_user.xp = max(0, current_user.xp - 10)
 
         db.session.add(ActivityLog(description=f"Moved task '{task.name}' to {task.status}", user_id=current_user.id))
         db.session.commit()
-        
+
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': task.status})
         return jsonify({"success": True})
@@ -468,7 +510,7 @@ def update_status():
 @app.route("/edit/<int:tid>", methods=['GET', 'POST'])
 @login_required
 def edit_task(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if not task or (task.user_id != current_user.id and current_user not in task.collaborators):
         return redirect(url_for('home'))
     if request.method == 'POST':
@@ -479,7 +521,7 @@ def edit_task(tid):
         task.due_date = request.form.get("due_date")
         db.session.add(ActivityLog(description=f"Edited details of task '{task.name}'", user_id=current_user.id))
         db.session.commit()
-        
+
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task.name, 'status': "Updated"})
         flash("Task updated! 📝", "info")
@@ -489,13 +531,13 @@ def edit_task(tid):
 @app.route("/delete/<int:tid>")
 @login_required
 def delete_task(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and task.user_id == current_user.id:
         task_name = task.name
         db.session.add(ActivityLog(description=f"Deleted task: '{task.name}'", user_id=current_user.id))
         db.session.delete(task)
         db.session.commit()
-        
+
         final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
         socketio.emit('board_changed', {'user': final_name, 'task': task_name, 'status': "Deleted"})
         flash("Task deleted permanently! 🗑️", "success")
@@ -505,7 +547,7 @@ def delete_task(tid):
 @login_required
 def save_description():
     data = request.get_json()
-    task = Task.query.get(data.get('task_id'))
+    task = db.session.get(Task, data.get('task_id'))
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
         task.description = data.get('description')
         db.session.commit()
@@ -516,7 +558,7 @@ def save_description():
 @app.route("/get_subtasks/<int:tid>")
 @login_required
 def get_subtasks(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
         subtasks = SubTask.query.filter_by(task_id=tid).all()
         return jsonify([{"id": s.id, "title": s.title, "is_completed": s.is_completed} for s in subtasks])
@@ -525,9 +567,9 @@ def get_subtasks(tid):
 @app.route("/add_subtask/<int:tid>", methods=["POST"])
 @login_required
 def add_subtask(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
-        title = request.get_json().get("title")
+        title = request.get_json().get("title", "").strip()
         if title:
             db.session.add(SubTask(title=title, task_id=tid))
             db.session.commit()
@@ -537,7 +579,7 @@ def add_subtask(tid):
 @app.route("/toggle_subtask/<int:sid>", methods=["POST"])
 @login_required
 def toggle_subtask(sid):
-    sub = SubTask.query.get(sid)
+    sub = db.session.get(SubTask, sid)
     if sub and (sub.task.user_id == current_user.id or current_user in sub.task.collaborators):
         sub.is_completed = not sub.is_completed
         db.session.commit()
@@ -547,7 +589,7 @@ def toggle_subtask(sid):
 @app.route("/delete_subtask/<int:sid>", methods=["POST"])
 @login_required
 def delete_subtask(sid):
-    sub = SubTask.query.get(sid)
+    sub = db.session.get(SubTask, sid)
     if sub and (sub.task.user_id == current_user.id or current_user in sub.task.collaborators):
         db.session.delete(sub)
         db.session.commit()
@@ -557,11 +599,11 @@ def delete_subtask(sid):
 @app.route("/chat/<int:tid>")
 @login_required
 def chat_room(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if not task or (task.user_id != current_user.id and current_user not in task.collaborators):
         flash("Unauthorized access to chat.", "error")
         return redirect(url_for('home'))
-        
+
     comments = Comment.query.filter_by(task_id=tid).order_by(Comment.timestamp.asc()).all()
     final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
     return render_template("chat.html", task=task, comments=comments, current_username=final_name)
@@ -569,7 +611,7 @@ def chat_room(tid):
 @app.route("/get_comments/<int:tid>")
 @login_required
 def get_comments(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
         comments = Comment.query.filter_by(task_id=tid).order_by(Comment.timestamp.asc()).all()
         return jsonify([{
@@ -583,14 +625,14 @@ def get_comments(tid):
 @app.route("/add_comment/<int:tid>", methods=["POST"])
 @login_required
 def add_comment(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
-        text_content = request.get_json().get("text")
+        text_content = request.get_json().get("text", "").strip()
         if text_content:
             new_comment = Comment(text=text_content, task_id=tid, user_id=current_user.id)
             db.session.add(new_comment)
             db.session.commit()
-            
+
             sender_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
             chat_data = {
                 "task_id": tid,
@@ -608,9 +650,9 @@ def add_comment(tid):
 @login_required
 def share_task():
     data = request.get_json()
-    task = Task.query.get(data.get('task_id'))
+    task = db.session.get(Task, data.get('task_id'))
     friend = User.query.filter_by(username=data.get('friend_username')).first()
-    
+
     if task and task.user_id == current_user.id:
         if friend:
             if friend not in task.collaborators and friend.id != current_user.id:
@@ -618,14 +660,12 @@ def share_task():
                 db.session.add(ActivityLog(description=f"Shared task '{task.name}' with {friend.username}", user_id=current_user.id))
                 db.session.commit()
                 socketio.emit('board_changed', {'user': 'System', 'task': task.name, 'status': f"Shared with {friend.username}"})
-                
+
                 sender_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
                 notification_msg = f"New Task Shared! {sender_name} assigned you '{task.name}'."
                 socketio.emit('notify_user', {'msg': notification_msg})
 
-                email_thread = threading.Thread(target=send_notification_email, args=(friend.username, sender_name, task.name))
-                email_thread.start()
-
+                socketio.start_background_task(send_notification_email, friend.username, sender_name, task.name)
                 return jsonify({"success": True, "message": "Task shared & Notification sent! 🔔"})
             return jsonify({"success": False, "message": "Already shared!"})
         return jsonify({"success": False, "message": "User not found!"})
@@ -634,7 +674,7 @@ def share_task():
 @app.route("/get_collaborators/<int:tid>")
 @login_required
 def get_collaborators(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if task and (task.user_id == current_user.id or current_user in task.collaborators):
         return jsonify([{"id": u.id, "username": u.display_name if u.display_name else u.username.split('@')[0]} for u in task.collaborators])
     return jsonify([])
@@ -642,8 +682,8 @@ def get_collaborators(tid):
 @app.route("/remove_collaborator/<int:tid>/<int:uid>", methods=["POST"])
 @login_required
 def remove_collaborator(tid, uid):
-    task = Task.query.get(tid)
-    user_to_remove = User.query.get(uid)
+    task = db.session.get(Task, tid)
+    user_to_remove = db.session.get(User, uid)
     if task and task.user_id == current_user.id and user_to_remove in task.collaborators:
         task.collaborators.remove(user_to_remove)
         db.session.commit()
@@ -654,34 +694,42 @@ def remove_collaborator(tid, uid):
 @app.route("/upload_attachment/<int:tid>", methods=["POST"])
 @login_required
 def upload_attachment(tid):
-    task = Task.query.get(tid)
+    task = db.session.get(Task, tid)
     if not task or (task.user_id != current_user.id and current_user not in task.collaborators):
         return redirect(url_for('home'))
 
     files = request.files.getlist('task_file')
+    uploaded_count = 0
     for file in files:
         if file and file.filename != '':
+            if not allowed_file(file.filename):
+                flash(f"Blocked invalid file: {file.filename} ❌", "error")
+                continue
+
             filename = secure_filename(file.filename)
             unique_filename = f"task_{tid}_{secrets.token_hex(4)}_{filename}"
-            
+
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
                 os.makedirs(app.config['UPLOAD_FOLDER'])
-                
+
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             file.save(file_path)
-            
+
             new_attachment = Attachment(file_path=f"/static/uploads/{unique_filename}", task_id=tid)
             db.session.add(new_attachment)
-            
-    db.session.add(ActivityLog(description=f"Uploaded file(s) to task '{task.name}'", user_id=current_user.id))
-    db.session.commit()
-    flash("File(s) uploaded successfully! 📎", "success")
+            uploaded_count += 1
+
+    if uploaded_count > 0:
+        db.session.add(ActivityLog(description=f"Uploaded file(s) to task '{task.name}'", user_id=current_user.id))
+        db.session.commit()
+        flash("File(s) uploaded successfully! 📎", "success")
+
     return redirect(url_for('home'))
 
 @app.route("/remove_attachment/<int:aid>", methods=["POST"])
 @login_required
 def remove_attachment(aid):
-    attachment = Attachment.query.get(aid)
+    attachment = db.session.get(Attachment, aid)
     if attachment and (attachment.task.user_id == current_user.id or current_user in attachment.task.collaborators):
         try:
             base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -689,12 +737,12 @@ def remove_attachment(aid):
             if os.path.exists(file_path):
                 os.remove(file_path)
         except Exception as e:
-            print("Could not remove file from disk:", e)
-            
+            print("File removal error:", e)
+
         db.session.delete(attachment)
         db.session.commit()
         flash("Attachment deleted! 🗑️", "success")
-        
+
     return redirect(url_for('home'))
 
 # ================= DASHBOARD & EXPORT =================
@@ -703,7 +751,7 @@ def remove_attachment(aid):
 def dashboard():
     my_tasks = Task.query.filter_by(user_id=current_user.id).all()
     tasks = list(set(my_tasks + current_user.shared_tasks.all()))
-    
+
     status_data = {
         'backlog': len([t for t in tasks if t.status == 'Backlog']),
         'todo': len([t for t in tasks if t.status == 'To Do']),
@@ -723,11 +771,11 @@ def dashboard():
 
     final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
     return render_template(
-        "dashboard.html", 
-        user_name=final_name, 
-        total_tasks=len(tasks), 
-        status_data=status_data, 
-        priority_data=priority_data, 
+        "dashboard.html",
+        user_name=final_name,
+        total_tasks=len(tasks),
+        status_data=status_data,
+        priority_data=priority_data,
         category_data=category_data
     )
 
@@ -735,13 +783,13 @@ def dashboard():
 @login_required
 def clear_done():
     tasks_to_delete = Task.query.filter_by(user_id=current_user.id, status='Done').all()
-    for task in tasks_to_delete: 
+    for task in tasks_to_delete:
         db.session.delete(task)
     db.session.commit()
     return redirect(url_for('home'))
 
 @app.route("/about")
-def about(): 
+def about():
     return render_template("about.html")
 
 @app.route("/export")
@@ -751,12 +799,12 @@ def export_tasks():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Task Name', 'Category', 'Priority', 'Current Status', 'Due Date', 'Description'])
-    for t in user_tasks: 
+    for t in user_tasks:
         writer.writerow([t.name, t.category, t.priority, t.status, t.due_date, t.description])
     output.seek(0)
     return Response(
-        output.getvalue(), 
-        mimetype="text/csv", 
+        output.getvalue(),
+        mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=TaskPro_Elite_Backup.csv"}
     )
 
@@ -768,7 +816,7 @@ def export_pdf():
 
     pdf = FPDF()
     pdf.add_page()
-    
+
     pdf.set_font("Arial", 'B', 16)
     final_name = current_user.display_name if current_user.display_name else current_user.username.split('@')[0]
     pdf.cell(200, 10, txt=f"TaskPro Elite - Board Report for {final_name}", ln=True, align='C')
@@ -786,7 +834,6 @@ def export_pdf():
     for t in user_tasks:
         task_name = (t.name[:35] + '..') if len(t.name) > 35 else t.name
         due = t.due_date if t.due_date else "No Date"
-        
         pdf.cell(60, 10, str(task_name), 1)
         pdf.cell(30, 10, str(t.category), 1)
         pdf.cell(30, 10, str(t.priority), 1)
@@ -796,12 +843,12 @@ def export_pdf():
 
     pdf_bytes = pdf.output(dest='S').encode('latin-1')
     return Response(
-        pdf_bytes, 
-        mimetype="application/pdf", 
+        pdf_bytes,
+        mimetype="application/pdf",
         headers={"Content-disposition": "attachment; filename=TaskPro_Report.pdf"}
     )
 
-# ================= CALENDAR ROUTES =================
+# ================= CALENDAR & HEATMAP ROUTES =================
 @app.route("/calendar")
 @login_required
 def calendar_view():
@@ -814,48 +861,46 @@ def get_calendar_events():
     my_tasks = Task.query.filter_by(user_id=current_user.id).all()
     shared_tasks = current_user.shared_tasks.all()
     tasks = list(set(my_tasks + shared_tasks))
-    
+
     events = []
     for t in tasks:
         if t.due_date:
             try:
                 date_obj = datetime.strptime(t.due_date, '%d %b %Y')
                 formatted_date = date_obj.strftime('%Y-%m-%d')
-                color = '#6366f1' 
-                if t.status == 'Done': 
+                color = '#6366f1'
+                if t.status == 'Done':
                     color = '#10b981'
-                elif t.priority == 'High': 
+                elif t.priority == 'High':
                     color = '#ef4444'
                 events.append({
-                    'id': t.id, 
-                    'title': f"{t.name} ({t.status})", 
-                    'start': formatted_date, 
-                    'color': color, 
+                    'id': t.id,
+                    'title': f"{t.name} ({t.status})",
+                    'start': formatted_date,
+                    'color': color,
                     'url': '/'
                 })
-            except Exception: 
+            except Exception:
                 pass
     return jsonify(events)
 
-# ================= HEATMAP & ACTIVITY METRICS API =================
 @app.route("/api/heatmap_data")
 @login_required
 def heatmap_data():
     today = (datetime.utcnow() + timedelta(hours=5, minutes=30)).date()
-    start_date = today - timedelta(days=119)  # Last 120 days (~17 weeks)
-    
-    # Filter exclusively for task completion logs
+    start_date = today - timedelta(days=119)
+
     completion_logs = ActivityLog.query.filter(
         ActivityLog.user_id == current_user.id,
         ActivityLog.timestamp >= datetime.combine(start_date, datetime.min.time()),
         ActivityLog.description.ilike('%to Done%')
     ).all()
-    
+
     activity_map = {}
     for i in range(120):
         d_str = (start_date + timedelta(days=i)).strftime('%Y-%m-%d')
         activity_map[d_str] = 0
-        
+
     for log in completion_logs:
         d_str = log.timestamp.strftime('%Y-%m-%d')
         if d_str in activity_map:
@@ -866,10 +911,8 @@ def heatmap_data():
     temp_streak = 0
     total_active_days = 0
 
-    all_dates_sorted = sorted(activity_map.keys())
-    for d in all_dates_sorted:
-        count = activity_map[d]
-        if count > 0:
+    for d in sorted(activity_map.keys()):
+        if activity_map[d] > 0:
             total_active_days += 1
             temp_streak += 1
             if temp_streak > longest_streak:
@@ -896,7 +939,6 @@ def heatmap_data():
         "total_active_days": total_active_days
     })
 
-# ================= ANALYTICS =================
 @app.route("/analytics")
 @login_required
 def analytics():
@@ -911,20 +953,21 @@ def analytics():
 
 # ================= AUTOMATED DAILY BRIEFING SCHEDULER =================
 def daily_morning_briefing():
+    if not SYSTEM_EMAIL or not SYSTEM_APP_PASSWORD:
+        return
     with app.app_context():
-        print("\n🔔 [SCHEDULER WOKE UP]: Checking database for tasks due today...")
         today_str = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime('%d %b %Y')
         users = User.query.all()
-        
+
         for user in users:
             if user.username and '@' in user.username and '.' in user.username:
                 due_tasks = Task.query.filter_by(user_id=user.id, due_date=today_str).filter(Task.status != 'Done').all()
-                
+
                 if due_tasks:
                     try:
                         task_list_text = "\n".join([f"- {t.name} (Priority: {t.priority})" for t in due_tasks])
                         display_name = user.display_name if user.display_name else user.username.split('@')[0]
-                        
+
                         email_body = (
                             f"Good Morning {display_name}!\n\n"
                             f"Here is your daily briefing from TaskPro Elite. You have tasks due today:\n\n"
@@ -932,20 +975,19 @@ def daily_morning_briefing():
                             f"Log in to your dashboard to complete them.\n\n"
                             f"Have a productive day!\n- TaskPro Elite AI"
                         )
-                        
+
                         msg = MIMEText(email_body, 'plain')
                         msg['Subject'] = f"📅 Today's Agenda: {len(due_tasks)} Tasks Due"
                         msg['From'] = SYSTEM_EMAIL
                         msg['To'] = user.username
-                        
+
                         server = smtplib.SMTP('smtp.gmail.com', 587)
                         server.starttls()
                         server.login(SYSTEM_EMAIL, SYSTEM_APP_PASSWORD)
                         server.send_message(msg)
                         server.quit()
-                        print(f"✅ Daily Briefing email sent to {user.username}")
                     except Exception as e:
-                        print(f"❌ Failed to send briefing to {user.username}: {e}")
+                        print(f"Briefing error for {user.username}: {e}")
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=daily_morning_briefing, trigger="cron", hour=8, minute=0)
@@ -953,4 +995,4 @@ scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)
