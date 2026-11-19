@@ -7,9 +7,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* 🟤 NEW MOCHA BROWN BACKGROUND (From Your Image) */
+        /* Mocha Brown Theme */
         body { 
-            background-color: #5c473d; /* Exact match to your image */
+            background-color: #5c473d;
             color: white; 
             margin: 0; 
             font-family: 'Inter', sans-serif; 
@@ -19,9 +19,9 @@
             overflow: hidden; 
         }
         
-        /* 🌫️ WARM GLASSMORPHISM HEADER */
+        /* Glassmorphism Header */
         .chat-header { 
-            background: rgba(40, 30, 25, 0.6); /* Adjusted to match brown theme */
+            background: rgba(40, 30, 25, 0.6);
             backdrop-filter: blur(15px); 
             -webkit-backdrop-filter: blur(15px);
             padding: 15px 25px; 
@@ -46,7 +46,7 @@
         .back-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
         .chat-title { font-size: 18px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 12px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         
-        /* 🟢 GLOWING ONLINE INDICATOR */
+        /* Online Indicator */
         .pulse-dot { 
             width: 12px; height: 12px; 
             background: #10b981; 
@@ -56,7 +56,7 @@
         }
         @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-        /* 💬 CHAT AREA */
+        /* Chat Area */
         .chat-messages { 
             flex: 1; 
             overflow-y: auto; 
@@ -65,10 +65,10 @@
             flex-direction: column; 
             gap: 20px; 
             scroll-behavior: smooth; 
-            background: transparent; /* Let the brown body show through */
+            background: transparent;
         }
         
-        /* 🫧 MESSAGE BUBBLES WITH ANIMATION */
+        /* Message Bubbles */
         .msg-bubble { 
             max-width: 65%; 
             padding: 14px 20px; 
@@ -80,7 +80,6 @@
         }
         @keyframes popIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         
-        /* 🟠 YOUR MESSAGES (Warm Orange/Brown Gradient to match) */
         .msg-mine { 
             background: linear-gradient(135deg, #d97706, #ea580c); 
             color: white; 
@@ -90,7 +89,6 @@
             transform-origin: bottom right;
         }
         
-        /* 🟤 OTHERS MESSAGES (Darker Brown Frosted Glass) */
         .msg-other { 
             background: rgba(40, 25, 20, 0.5); 
             backdrop-filter: blur(10px);
@@ -108,7 +106,7 @@
         .msg-time { font-size: 10px; position: absolute; bottom: -20px; right: 5px; color: #d6d3d1; font-weight: 500; }
         .msg-other .msg-time { left: 5px; right: auto; }
         
-        /* ⌨️ FLOATING INPUT AREA */
+        /* Floating Input Area */
         .chat-input-area { 
             padding: 20px 15vw 30px 15vw; 
             background: transparent;
@@ -139,7 +137,7 @@
         }
         .chat-input::placeholder { color: #a8a29e; }
         
-        /* 🚀 SEND BUTTON */
+        /* Send Button */
         .send-btn { 
             background: linear-gradient(135deg, #f59e0b, #ea580c); 
             color: white; 
@@ -158,13 +156,13 @@
         .send-btn:hover { transform: scale(1.15) rotate(-10deg); }
         .send-btn:active { transform: scale(0.9); }
         
-        /* ✨ CUSTOM SCROLLBAR */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
-        /* Empty state styling */
+        /* Empty State */
         #empty-state {
             text-align: center;
             background: rgba(40, 25, 20, 0.5);
@@ -222,6 +220,13 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
+        // XSS Protection: Sanitizes user input before rendering in DOM
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
         const socket = io();
         const taskId = {{ task.id }};
         const myUserId = {{ current_user.id }}; 
@@ -245,7 +250,7 @@
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     const emptyState = document.getElementById('empty-state');
-                    if(emptyState) emptyState.remove();
+                    if (emptyState) emptyState.remove();
                 }
             });
         }
@@ -255,21 +260,21 @@
             if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
         });
 
-        // LIVE CHAT LISTENER
+        // Live Chat Listener with XSS-safe rendering
         socket.on('new_chat_message', function(data) {
             if (data.task_id == taskId) {
                 const emptyState = document.getElementById('empty-state');
-                if(emptyState) emptyState.remove();
+                if (emptyState) emptyState.remove();
 
                 const isMine = (data.user_id === myUserId);
                 const bubbleClass = isMine ? 'msg-mine' : 'msg-other';
-                const senderName = isMine ? 'You' : data.username;
+                const senderName = isMine ? 'You' : escapeHTML(data.username);
 
                 const newBubble = `
                     <div class="msg-bubble ${bubbleClass}">
                         <span class="msg-sender">${senderName}</span>
-                        ${data.text}
-                        <span class="msg-time">${data.time}</span>
+                        ${escapeHTML(data.text)}
+                        <span class="msg-time">${escapeHTML(data.time)}</span>
                     </div>
                 `;
                 
